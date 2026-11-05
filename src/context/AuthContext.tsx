@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth'
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -17,16 +18,19 @@ import {
   type ReactNode,
 } from 'react'
 import { auth, isFirebaseConfigured } from '../lib/firebase'
-import { getUserProfile, upsertUserProfile } from '../services/users'
+import { getUserProfile, setAccountType as saveAccountType, upsertUserProfile } from '../services/users'
+import type { AccountType, UserProfile } from '../types'
 
 type AuthContextValue = {
   user: User | null
+  profile: UserProfile | null
   loading: boolean
   configured: boolean
   signUp: (email: string, password: string, displayName: string) => Promise<void>
   signIn: (email: string, password: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
   logOut: () => Promise<void>
+  chooseAccountType: (type: AccountType) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -36,14 +40,16 @@ async function syncProfile(user: User) {
   const existing = await getUserProfile(user.uid)
   await upsertUserProfile({
     uid: user.uid,
-    email: user.email || '',
-    displayName: user.displayName || user.email?.split('@')[0] || 'User',
+    email: (user.email || existing?.email || '').toLowerCase(),
+    displayName: user.displayName || existing?.displayName || user.email?.split('@')[0] || 'User',
     createdAt: existing?.createdAt ?? Date.now(),
   })
+  return getUserProfile(user.uid)
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(isFirebaseConfigured)
 
   useEffect(() => {
@@ -54,20 +60,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return onAuthStateChanged(auth, (next) => {
       setUser(next)
-      setLoading(false)
+      if (!next) {
+        setProfile(null)
+        setLoading(false)
+        return
+      }
+      void syncProfile(next)
+        .then(setProfile)
+        .catch(() => setProfile(null))
+        .finally(() => setLoading(false))
     })
   }, [])
+
+  const chooseAccountType = useCallback(
+    async (type: AccountType) => {
+      if (!user) throw new Error('Sign in first.')
+      await saveAccountType(user.uid, type)
+      setProfile((current) =>
+        current
+          ? { ...current, accountType: type }
+          : {
+              uid: user.uid,
+              email: (user.email || '').toLowerCase(),
+              displayName: user.displayName || user.email?.split('@')[0] || 'User',
+              createdAt: Date.now(),
+              accountType: type,
+            },
+      )
+    },
+    [user],
+  )
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
+      profile,
       loading,
       configured: isFirebaseConfigured,
       async signUp(email, password, displayName) {
         if (!auth) throw new Error('Firebase is not configured.')
         const cred = await createUserWithEmailAndPassword(auth, email, password)
         await updateProfile(cred.user, { displayName })
-        await syncProfile(cred.user)
+        setProfile(await syncProfile(cred.user))
       },
       async signIn(email, password) {
         if (!auth) throw new Error('Firebase is not configured.')
@@ -76,14 +110,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async signInWithGoogle() {
         if (!auth) throw new Error('Firebase is not configured.')
         const cred = await signInWithPopup(auth, googleProvider)
-        await syncProfile(cred.user)
+        setProfile(await syncProfile(cred.user))
       },
       async logOut() {
         if (!auth) throw new Error('Firebase is not configured.')
         await signOut(auth)
       },
+      chooseAccountType,
     }),
-    [user, loading],
+    [user, profile, loading, chooseAccountType],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

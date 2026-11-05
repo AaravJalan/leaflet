@@ -1,21 +1,27 @@
-import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
-import { getAnnouncement } from '../services/announcements'
+import { useDemo } from '../context/DemoContext'
+import { useOrgAccess } from '../lib/orgAccess'
+import { formatWhen } from '../lib/schedule'
+import { OrgMarks } from '../components/OrgMarks'
+import { loadAnnouncement } from '../services/catalog'
+import { deleteAnnouncement } from '../services/announcements'
 import type { Announcement } from '../types'
 
 export function AnnouncementDetail() {
   const { announcementId = '' } = useParams()
-  const { configured } = useAuth()
+  const { user, profile } = useAuth()
+  const demo = useDemo()
+  const navigate = useNavigate()
   const [item, setItem] = useState<Announcement | null>(null)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!configured || !announcementId) {
+    if (!announcementId) {
       setLoading(false)
       return
     }
@@ -26,7 +32,11 @@ export function AnnouncementDetail() {
       setLoading(true)
       setError('')
       try {
-        const next = await getAnnouncement(announcementId)
+        const next = await loadAnnouncement(
+          announcementId,
+          user?.uid ?? null,
+          demo.localPosts,
+        )
         if (!cancelled) setItem(next)
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load announcement')
@@ -39,13 +49,29 @@ export function AnnouncementDetail() {
     return () => {
       cancelled = true
     }
-  }, [configured, announcementId])
+  }, [announcementId, user, profile, demo.localPosts, demo.revision])
 
   async function copyLink() {
     await navigator.clipboard.writeText(window.location.href)
     setCopied(true)
     window.setTimeout(() => setCopied(false), 1600)
   }
+
+  async function onDelete() {
+    if (!item || item.createdBy !== user?.uid) return
+    if (!window.confirm('Delete this announcement?')) return
+    setError('')
+    try {
+      if (item.mock || item.id.startsWith('mock-') || item.id.startsWith('local-')) demo.removePost(item.id)
+      else await deleteAnnouncement(item.id)
+      navigate(`/org/${item.orgId}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not delete announcement')
+    }
+  }
+
+  const access = useOrgAccess(item?.orgId ?? '', item?.orgOwnerId)
+  const canEdit = Boolean(user && item && item.createdBy === user.uid)
 
   return (
     <div className="page page--narrow">
@@ -57,19 +83,32 @@ export function AnnouncementDetail() {
       {item ? (
         <article className="panel">
           <div className="org-hero__meta">
-            <Link className="pill" to={`/org/${item.orgId}`}>
+            {user ? (
+              <span className="pill">
+                {item.createdBy === user.uid
+                  ? profile?.displayName || user.displayName || item.createdByName || 'You'
+                  : item.createdByName || 'Someone'}
+              </span>
+            ) : null}
+            <Link className="name-link" to={`/org/${item.orgId}`}>
               {item.orgName}
             </Link>
+            <OrgMarks
+              createdByYou={access.yours}
+              canPost={access.canPost}
+              following={access.following}
+              createdAt={item.orgCreatedAt ?? 0}
+            />
             <span className="muted">{item.orgType}</span>
           </div>
           <h1>{item.title}</h1>
           <p className="lede">{item.description}</p>
 
           <dl className="facts">
-            {item.startsAt ? (
+            {formatWhen(item) ? (
               <>
                 <dt>When</dt>
-                <dd>{format(item.startsAt, 'EEE, MMM d · h:mm a')}</dd>
+                <dd>{formatWhen(item)}</dd>
               </>
             ) : null}
             {item.location ? (
@@ -94,6 +133,16 @@ export function AnnouncementDetail() {
             <button type="button" className="btn" onClick={() => void copyLink()}>
               {copied ? 'Copied' : 'Copy link'}
             </button>
+            {canEdit ? (
+              <Link className="btn btn--ghost" to={`/a/${item.id}/edit`}>
+                Edit
+              </Link>
+            ) : null}
+            {canEdit ? (
+              <button type="button" className="btn btn--ghost" onClick={() => void onDelete()}>
+                Delete
+              </button>
+            ) : null}
             <Link className="btn btn--ghost" to={`/org/${item.orgId}`}>
               View org
             </Link>

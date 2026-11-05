@@ -54,7 +54,7 @@ const SEED = [
     posts: [
       {
         title: 'Open studio night',
-        description: 'Local makers open their doors from 6–9pm. Free, no RSVP needed.',
+        description: 'Local makers open their doors from 6 to 9pm. Free, no RSVP needed.',
         location: '1520 W Morse Ave',
         startsAt: Date.now() + 5 * day,
         link: '',
@@ -77,7 +77,7 @@ const SEED = [
       },
       {
         title: 'Tool library hours extended',
-        description: 'Borrow rakes, loppers, and wheelbarrows Saturdays 10am–2pm.',
+        description: 'Borrow rakes, loppers, and wheelbarrows Saturdays 10am to 2pm.',
         location: 'Volunteer shed, south lot',
         startsAt: null,
         link: '',
@@ -110,6 +110,11 @@ export async function seedDemoData(input: {
         description: post.description,
         location: post.location,
         startsAt: post.startsAt,
+        endsAt: null,
+        createdByName: input.ownerName,
+        schedule: 'once',
+        repeatDays: [],
+        weekOf: null,
         link: post.link,
         createdBy: input.ownerId,
       })

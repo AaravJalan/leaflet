@@ -10,15 +10,14 @@ export const ORG_TYPES = [
 
 export type OrgType = (typeof ORG_TYPES)[number]
 
+export type AccountType = 'organizer' | 'volunteer' | 'both'
+
 export type UserProfile = {
   uid: string
   email: string
   displayName: string
   createdAt: number
-  /** Follow orgs / show up for community work */
-  isVolunteer: boolean
-  /** Create orgs and post announcements */
-  isOrganizer: boolean
+  accountType: AccountType | null
 }
 
 export type Organization = {
@@ -29,8 +28,21 @@ export type Organization = {
   type: OrgType
   ownerId: string
   ownerName: string
+  location: string
   createdAt: number
-  verified: boolean
+  /** Client-only sample org. Not stored as a special Firestore flag. */
+  mock?: boolean
+}
+
+export type PermissionEvent = {
+  id: string
+  type: 'allowed' | 'removed'
+  orgId: string
+  orgName: string
+  actorId: string
+  actorName: string
+  targetUserId: string
+  createdAt: number
 }
 
 export type OrgMember = {
@@ -39,7 +51,6 @@ export type OrgMember = {
   userId: string
   email: string
   displayName: string
-  role: 'owner' | 'organizer'
   addedBy: string
   createdAt: number
 }
@@ -49,13 +60,21 @@ export type Announcement = {
   orgId: string
   orgName: string
   orgType: OrgType
+  orgOwnerId?: string
+  orgCreatedAt?: number
   title: string
   description: string
   location: string
   startsAt: number | null
+  endsAt: number | null
   link: string
   createdAt: number
   createdBy: string
+  createdByName: string
+  schedule: 'once' | 'weekly'
+  repeatDays: number[]
+  weekOf: number | null
+  mock?: boolean
 }
 
 export type Subscription = {

@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import { OrgCard } from '../components/OrgCard'
 import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
-import { listOrganizations } from '../services/organizations'
+import { loadOrganizations } from '../services/catalog'
 import { ORG_TYPES, type Organization, type OrgType } from '../types'
 
 export function Browse() {
-  const { configured } = useAuth()
+  const { user, profile } = useAuth()
   const [type, setType] = useState<OrgType | 'All'>('All')
   const [search, setSearch] = useState('')
   const [orgs, setOrgs] = useState<Organization[]>([])
@@ -14,18 +14,18 @@ export function Browse() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!configured) {
-      setLoading(false)
-      return
-    }
-
     let cancelled = false
     const handle = window.setTimeout(() => {
       void (async () => {
         setLoading(true)
         setError('')
         try {
-          const next = await listOrganizations({ type, search })
+          const next = await loadOrganizations({
+            type,
+            search,
+            userId: user?.uid ?? null,
+            displayName: profile?.displayName || user?.displayName || 'You',
+          })
           if (!cancelled) setOrgs(next)
         } catch (err) {
           if (!cancelled) {
@@ -41,7 +41,7 @@ export function Browse() {
       cancelled = true
       window.clearTimeout(handle)
     }
-  }, [configured, type, search])
+  }, [type, search, user, profile])
 
   return (
     <div className="page">

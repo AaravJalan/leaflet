@@ -1,17 +1,18 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   orderBy,
   query,
+  updateDoc,
   where,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { slugify } from '../lib/slug'
 import type { Organization, OrgType } from '../types'
-import { upsertOrgMember } from './members'
 
 function requireDb() {
   if (!db) throw new Error('Firebase is not configured.')
@@ -19,7 +20,17 @@ function requireDb() {
 }
 
 function mapOrg(id: string, data: Record<string, unknown>): Organization {
-  return { id, ...(data as Omit<Organization, 'id'>) }
+  return {
+    id,
+    name: String(data.name || ''),
+    slug: String(data.slug || ''),
+    description: String(data.description || ''),
+    type: (data.type as Organization['type']) || 'Other',
+    ownerId: String(data.ownerId || ''),
+    ownerName: String(data.ownerName || ''),
+    location: String(data.location || ''),
+    createdAt: Number(data.createdAt || 0),
+  }
 }
 
 export async function createOrganization(input: {
@@ -28,7 +39,7 @@ export async function createOrganization(input: {
   type: OrgType
   ownerId: string
   ownerName: string
-  ownerEmail?: string
+  location?: string
 }): Promise<string> {
   const database = requireDb()
   const ref = await addDoc(collection(database, 'organizations'), {
@@ -38,21 +49,29 @@ export async function createOrganization(input: {
     type: input.type,
     ownerId: input.ownerId,
     ownerName: input.ownerName,
-    createdAt: Date.now(),
-    verified: true,
-  })
-
-  await upsertOrgMember({
-    orgId: ref.id,
-    userId: input.ownerId,
-    email: (input.ownerEmail || '').toLowerCase(),
-    displayName: input.ownerName,
-    role: 'owner',
-    addedBy: input.ownerId,
+    location: (input.location || '').trim(),
     createdAt: Date.now(),
   })
-
   return ref.id
+}
+
+export async function updateOrganization(
+  id: string,
+  input: { name: string; description: string; type: OrgType; location: string },
+): Promise<void> {
+  const database = requireDb()
+  await updateDoc(doc(database, 'organizations', id), {
+    name: input.name.trim(),
+    slug: slugify(input.name),
+    description: input.description.trim(),
+    type: input.type,
+    location: input.location.trim(),
+  })
+}
+
+export async function deleteOrganization(id: string): Promise<void> {
+  const database = requireDb()
+  await deleteDoc(doc(database, 'organizations', id))
 }
 
 export async function getOrganization(id: string): Promise<Organization | null> {

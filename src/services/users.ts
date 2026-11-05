@@ -1,18 +1,25 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  setDoc,
-  where,
-} from 'firebase/firestore'
+import { doc, getDoc, getDocs, query, collection, setDoc, where } from 'firebase/firestore'
 import { db } from '../lib/firebase'
-import type { UserProfile } from '../types'
+import type { AccountType, UserProfile } from '../types'
 
 function requireDb() {
   if (!db) throw new Error('Firebase is not configured.')
   return db
+}
+
+function asAccountType(value: unknown): AccountType | null {
+  if (value === 'organizer' || value === 'volunteer' || value === 'both') return value
+  return null
+}
+
+function mapUser(id: string, data: Record<string, unknown>): UserProfile {
+  return {
+    uid: id,
+    email: String(data.email || ''),
+    displayName: String(data.displayName || ''),
+    createdAt: Number(data.createdAt || Date.now()),
+    accountType: asAccountType(data.accountType),
+  }
 }
 
 export async function upsertUserProfile(
@@ -25,16 +32,13 @@ export async function upsertUserProfile(
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const database = requireDb()
   const snap = await getDoc(doc(database, 'users', uid))
-  if (!snap.exists()) return null
-  const data = snap.data()
-  return {
-    uid: snap.id,
-    email: String(data.email || ''),
-    displayName: String(data.displayName || ''),
-    createdAt: Number(data.createdAt || Date.now()),
-    isVolunteer: Boolean(data.isVolunteer),
-    isOrganizer: Boolean(data.isOrganizer),
-  }
+  return snap.exists() ? mapUser(snap.id, snap.data()) : null
+}
+
+export async function listUsers(): Promise<UserProfile[]> {
+  const database = requireDb()
+  const snap = await getDocs(collection(database, 'users'))
+  return snap.docs.map((item) => mapUser(item.id, item.data()))
 }
 
 export async function findUserByEmail(email: string): Promise<UserProfile | null> {
@@ -45,21 +49,9 @@ export async function findUserByEmail(email: string): Promise<UserProfile | null
   )
   const snap = await getDocs(q)
   if (snap.empty) return null
-  const docSnap = snap.docs[0]
-  const data = docSnap.data()
-  return {
-    uid: docSnap.id,
-    email: String(data.email || ''),
-    displayName: String(data.displayName || ''),
-    createdAt: Number(data.createdAt || Date.now()),
-    isVolunteer: Boolean(data.isVolunteer),
-    isOrganizer: Boolean(data.isOrganizer),
-  }
+  return mapUser(snap.docs[0].id, snap.docs[0].data())
 }
 
-export async function updateUserRoles(
-  uid: string,
-  roles: { isVolunteer: boolean; isOrganizer: boolean },
-): Promise<void> {
-  await upsertUserProfile({ uid, ...roles })
+export async function setAccountType(uid: string, accountType: AccountType): Promise<void> {
+  await upsertUserProfile({ uid, accountType })
 }

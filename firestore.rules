@@ -5,31 +5,48 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
+    function userData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function orgDoc(orgId) {
+    function accountType() {
+      return userData().accountType;
+    }
+
+    function canOrganize() {
+      return signedIn()
+        && (accountType() == 'organizer' || accountType() == 'both');
+    }
+
+    function canVolunteer() {
+      return signedIn()
+        && (accountType() == 'volunteer' || accountType() == 'both');
+    }
+
+    function orgData(orgId) {
       return get(/databases/$(database)/documents/organizations/$(orgId)).data;
     }
 
     function isOrgOwner(orgId) {
-      return signedIn()
-        && exists(/databases/$(database)/documents/organizations/$(orgId))
-        && orgDoc(orgId).ownerId == request.auth.uid;
+      return signedIn() && orgData(orgId).ownerId == request.auth.uid;
     }
 
-    function isOrgPoster(orgId) {
+    function isPoster(orgId) {
       return isOrgOwner(orgId)
-        || (
-          signedIn()
-          && exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid))
-        );
+        || exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid));
     }
 
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if isOwner(userId);
+      allow create, update: if signedIn() && request.auth.uid == userId;
+
+      match /activity/{eventId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create: if signedIn()
+          && request.resource.data.actorId == request.auth.uid
+          && request.resource.data.targetUserId == userId
+          && request.resource.data.type in ['allowed', 'removed'];
+      }
     }
 
     match /organizations/{orgId} {
@@ -37,40 +54,22 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.name is string
-        && request.resource.data.slug is string
-        && request.resource.data.description is string
-        && request.resource.data.type is string
-        && request.resource.data.ownerName is string
-        && request.resource.data.createdAt is number
-        && request.resource.data.verified is bool;
+        && request.resource.data.createdAt is number;
       allow update, delete: if isOrgOwner(orgId);
 
       match /members/{memberId} {
         allow read: if true;
-        allow create, update, delete: if isOrgOwner(orgId)
-          || (
-            // Owner bootstraps their own membership when creating the org
-            signedIn()
-            && isOrgOwner(orgId)
-          )
-          || (
-            // Allow creator to write their owner membership in the same session
-            signedIn()
-            && memberId == request.auth.uid
-            && request.resource.data.role == 'owner'
-            && request.resource.data.userId == request.auth.uid
-            && request.resource.data.orgId == orgId
-            && exists(/databases/$(database)/documents/organizations/$(orgId))
-            && orgDoc(orgId).ownerId == request.auth.uid
-          );
+        allow create, update: if isOrgOwner(orgId)
+          && request.resource.data.userId == memberId
+          && request.resource.data.orgId == orgId;
+        allow delete: if isOrgOwner(orgId);
       }
     }
 
     match /announcements/{announcementId} {
       allow read: if true;
-      allow create: if signedIn()
-        && request.resource.data.createdBy == request.auth.uid
-        && isOrgPoster(request.resource.data.orgId);
+      allow create: if request.resource.data.createdBy == request.auth.uid
+        && isPoster(request.resource.data.orgId);
       allow update, delete: if signedIn()
         && (
           resource.data.createdBy == request.auth.uid
@@ -79,10 +78,15 @@ service cloud.firestore {
     }
 
     match /subscriptions/{subscriptionId} {
-      allow read: if signedIn() && resource.data.userId == request.auth.uid;
-      allow create: if signedIn()
+      // Missing docs must be readable, or "am I subscribed?" throws
+      // Missing or insufficient permissions.
+      allow get: if signedIn()
+        && subscriptionId.matches('^' + request.auth.uid + '_.*');
+      allow list: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if canVolunteer()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.id == subscriptionId;
+        && request.resource.data.id == subscriptionId
+        && orgData(request.resource.data.orgId).ownerId != request.auth.uid;
       allow delete: if signedIn() && resource.data.userId == request.auth.uid;
     }
   }

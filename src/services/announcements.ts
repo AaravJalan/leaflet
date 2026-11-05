@@ -1,11 +1,13 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
   orderBy,
   query,
+  updateDoc,
   where,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
@@ -17,7 +19,24 @@ function requireDb() {
 }
 
 function mapAnnouncement(id: string, data: Record<string, unknown>): Announcement {
-  return { id, ...(data as Omit<Announcement, 'id'>) }
+  return {
+    id,
+    orgId: String(data.orgId || ''),
+    orgName: String(data.orgName || ''),
+    orgType: (data.orgType as Announcement['orgType']) || 'Other',
+    title: String(data.title || ''),
+    description: String(data.description || ''),
+    location: String(data.location || ''),
+    startsAt: data.startsAt == null ? null : Number(data.startsAt),
+    endsAt: data.endsAt == null ? null : Number(data.endsAt),
+    link: String(data.link || ''),
+    createdAt: Number(data.createdAt || 0),
+    createdBy: String(data.createdBy || ''),
+    createdByName: String(data.createdByName || ''),
+    schedule: data.schedule === 'weekly' ? 'weekly' : 'once',
+    repeatDays: Array.isArray(data.repeatDays) ? data.repeatDays.map(Number) : [],
+    weekOf: data.weekOf == null ? null : Number(data.weekOf),
+  }
 }
 
 export async function createAnnouncement(input: {
@@ -26,8 +45,13 @@ export async function createAnnouncement(input: {
   description: string
   location: string
   startsAt: number | null
+  endsAt: number | null
   link: string
   createdBy: string
+  createdByName: string
+  schedule: 'once' | 'weekly'
+  repeatDays: number[]
+  weekOf: number | null
 }): Promise<string> {
   const database = requireDb()
   const ref = await addDoc(collection(database, 'announcements'), {
@@ -38,11 +62,49 @@ export async function createAnnouncement(input: {
     description: input.description.trim(),
     location: input.location.trim(),
     startsAt: input.startsAt,
+    endsAt: input.endsAt,
     link: input.link.trim(),
     createdAt: Date.now(),
     createdBy: input.createdBy,
+    createdByName: input.createdByName,
+    schedule: input.schedule,
+    repeatDays: input.repeatDays,
+    weekOf: input.weekOf,
   })
   return ref.id
+}
+
+export async function updateAnnouncement(
+  id: string,
+  input: {
+    title: string
+    description: string
+    location: string
+    startsAt: number | null
+    endsAt: number | null
+    link: string
+    schedule: 'once' | 'weekly'
+    repeatDays: number[]
+    weekOf: number | null
+  },
+): Promise<void> {
+  const database = requireDb()
+  await updateDoc(doc(database, 'announcements', id), {
+    title: input.title.trim(),
+    description: input.description.trim(),
+    location: input.location.trim(),
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
+    link: input.link.trim(),
+    schedule: input.schedule,
+    repeatDays: input.repeatDays,
+    weekOf: input.weekOf,
+  })
+}
+
+export async function deleteAnnouncement(id: string): Promise<void> {
+  const database = requireDb()
+  await deleteDoc(doc(database, 'announcements', id))
 }
 
 export async function getAnnouncement(id: string): Promise<Announcement | null> {
