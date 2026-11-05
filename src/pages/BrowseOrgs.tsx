@@ -17,7 +17,7 @@ export function BrowseOrgs() {
   const { user, profile } = useAuth()
   const demo = useDemo()
   const [params, setParams] = useSearchParams()
-  const scope = readScope(params.get('scope'))
+  const scope = user ? readScope(params.get('scope')) : 'all'
   const [type, setType] = useState<OrgType | 'All'>('All')
   const [search, setSearch] = useState('')
   const [orgs, setOrgs] = useState<Organization[]>([])
@@ -67,15 +67,19 @@ export function BrowseOrgs() {
         <div className="section__head">
           <div>
             <h1>Organizations</h1>
-            <p className="lede lede--tight">All public orgs, followed orgs, or created orgs.</p>
+            <p className="lede lede--tight">
+              {user ? 'All public orgs, followed orgs, or created orgs.' : 'Public orgs.'}
+            </p>
           </div>
-          <ScopeToggle
-            value={scope}
-            onChange={(next) => {
-              if (next === 'all') setParams({})
-              else setParams({ scope: next })
-            }}
-          />
+          {user ? (
+            <ScopeToggle
+              value={scope}
+              onChange={(next) => {
+                if (next === 'all') setParams({})
+                else setParams({ scope: next })
+              }}
+            />
+          ) : null}
         </div>
 
         <div className="filters">
@@ -99,9 +103,6 @@ export function BrowseOrgs() {
           </select>
         </div>
 
-        {scope !== 'all' && !user ? (
-          <p className="empty">Sign in to use Following and My orgs.</p>
-        ) : null}
         {loading ? <p className="muted">Loading…</p> : null}
         {error ? <p className="error">{error}</p> : null}
         {!loading && !error && visible.length === 0 ? (

@@ -17,7 +17,7 @@ export function BrowseAnnouncements() {
   const { user, profile } = useAuth()
   const demo = useDemo()
   const [params, setParams] = useSearchParams()
-  const scope = readScope(params.get('scope'))
+  const scope = user ? readScope(params.get('scope')) : 'all'
   const [items, setItems] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -58,17 +58,16 @@ export function BrowseAnnouncements() {
           <div>
             <h1>Announcements</h1>
             <p className="lede lede--tight">
-              Filter by everything, followed orgs, or created orgs.
+              {user ? 'Filter by everything, followed orgs, or created orgs.' : 'Public announcements.'}
             </p>
           </div>
-          <ScopeToggle
-            value={scope}
-            onChange={(next) => setParams(next === 'all' ? {} : { scope: next })}
-          />
+          {user ? (
+            <ScopeToggle
+              value={scope}
+              onChange={(next) => setParams(next === 'all' ? {} : { scope: next })}
+            />
+          ) : null}
         </div>
-        {scope !== 'all' && !user ? (
-          <p className="empty">Sign in to use Following and My orgs.</p>
-        ) : null}
         {loading ? <p className="muted">Loading…</p> : null}
         {!loading && items.length === 0 ? <p className="empty">Nothing in this view.</p> : null}
         <div className="stack">
