@@ -102,7 +102,7 @@ export function AnnouncementDetail() {
             <span className="muted">{item.orgType}</span>
           </div>
           <h1>{item.title}</h1>
-          <p className="lede">{item.description}</p>
+          <p className="lede" style={{ whiteSpace: "pre-line" }}>{item.description}</p>
 
           <dl className="facts">
             {formatWhen(item) ? (
