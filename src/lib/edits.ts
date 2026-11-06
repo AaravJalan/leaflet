@@ -10,6 +10,7 @@ export type OrgEdit = {
   description?: string
   type?: OrgType
   location?: string
+  link?: string
   slug?: string
 }
 

@@ -237,8 +237,9 @@ export function OrgDetail() {
               />
             </div>
             <h1>{org.name}</h1>
-            <p className="lede">{org.description}</p>
+            <p className="lede" style={{ whiteSpace: "pre-line" }}>{org.description}</p>
             {org.location ? <p className="muted">{org.location}</p> : null}
+            {org.link ? <a href={org.link} target="_blank" rel="noreferrer"> {org.link} </a> : null}
             {user ? <p className="muted">Organized by {org.ownerName}</p> : null}
             <div className="hero__actions">
               {yours ? (

@@ -29,6 +29,7 @@ function mapOrg(id: string, data: Record<string, unknown>): Organization {
     ownerId: String(data.ownerId || ''),
     ownerName: String(data.ownerName || ''),
     location: String(data.location || ''),
+    link: String(data.link || ''),
     createdAt: Number(data.createdAt || 0),
   }
 }
@@ -40,6 +41,7 @@ export async function createOrganization(input: {
   ownerId: string
   ownerName: string
   location?: string
+  link?: string
 }): Promise<string> {
   const database = requireDb()
   const ref = await addDoc(collection(database, 'organizations'), {
@@ -50,6 +52,7 @@ export async function createOrganization(input: {
     ownerId: input.ownerId,
     ownerName: input.ownerName,
     location: (input.location || '').trim(),
+    link: (input.link || '').trim(),
     createdAt: Date.now(),
   })
   return ref.id
@@ -57,7 +60,7 @@ export async function createOrganization(input: {
 
 export async function updateOrganization(
   id: string,
-  input: { name: string; description: string; type: OrgType; location: string },
+  input: { name: string; description: string; type: OrgType; location: string; link: string },
 ): Promise<void> {
   const database = requireDb()
   await updateDoc(doc(database, 'organizations', id), {
@@ -66,6 +69,7 @@ export async function updateOrganization(
     description: input.description.trim(),
     type: input.type,
     location: input.location.trim(),
+    link: input.link.trim(),
   })
 }
 

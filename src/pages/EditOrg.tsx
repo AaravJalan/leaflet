@@ -18,6 +18,7 @@ export function EditOrg() {
   const [description, setDescription] = useState('')
   const [type, setType] = useState<OrgType>('Neighborhood')
   const [location, setLocation] = useState('')
+  const [link, setLink] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -33,6 +34,7 @@ export function EditOrg() {
           setDescription(next.description)
           setType(next.type)
           setLocation(next.location || '')
+          setLink(next.link || '')
         }
         setLoading(false)
       },
@@ -55,6 +57,7 @@ export function EditOrg() {
         description: description.trim(),
         type,
         location: location.trim(),
+        link: link.trim(),
         slug: slugify(name),
       }
       if (org.mock) demo.saveOrg(org.id, edit)
@@ -109,6 +112,10 @@ export function EditOrg() {
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Neighborhood, campus, or meeting area"
               />
+            </label>
+            <label>
+              Link
+              <input type="url" value={link} onChange={(e) => setLink(e.target.value)} />
             </label>
             {error ? <p className="error">{error}</p> : null}
             <div className="hero__actions">

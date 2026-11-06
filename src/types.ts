@@ -29,6 +29,7 @@ export type Organization = {
   ownerId: string
   ownerName: string
   location: string
+  link?: string
   createdAt: number
   /** Client-only sample org. Not stored as a special Firestore flag. */
   mock?: boolean

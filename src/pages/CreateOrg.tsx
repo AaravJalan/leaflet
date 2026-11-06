@@ -16,6 +16,7 @@ export function CreateOrg() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
+  const [link, setLink] = useState('')
   const [type, setType] = useState<OrgType>('Neighborhood')
   const [posters, setPosters] = useState<UserProfile[]>([])
   const [error, setError] = useState('')
@@ -53,6 +54,7 @@ export function CreateOrg() {
         ownerId: user.uid,
         ownerName: user.displayName || user.email || 'Organizer',
         location,
+        link,
       })
       const actorName = profile?.displayName || user.displayName || 'Someone'
       for (const person of posters) {
@@ -122,6 +124,15 @@ export function CreateOrg() {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Where this group usually meets"
+            />
+          </label>
+          <label>
+            Link
+            <input
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://example.org"
             />
           </label>
           <label>
