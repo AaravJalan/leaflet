@@ -97,5 +97,5 @@ export function formatWhen(item: Pick<Announcement, 'schedule' | 'repeatDays' | 
   if (!item.startsAt) return ''
   const start = format(item.startsAt, 'EEE, MMM d, h:mm a')
   if (!item.endsAt) return start
-  return `${start} to ${format(item.endsAt, 'h:mm a')}`
+  return `${start} to ${format(item.endsAt, 'EEE, MMM d, h:mm a')}`
 }

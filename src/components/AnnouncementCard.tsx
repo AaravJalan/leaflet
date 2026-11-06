@@ -42,6 +42,7 @@ export function AnnouncementCard({ announcement }: { announcement: Announcement 
       <div className="announcement-card__details">
         {when ? <span>{when}</span> : null}
         {announcement.location ? <span>{announcement.location}</span> : null}
+        {announcement.link ? <a href={announcement.link} target="_blank" rel="noreferrer">{announcement.link}</a> : null}
       </div>
     </article>
   )
