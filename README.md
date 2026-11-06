@@ -34,9 +34,9 @@ Local `npm run dev` is ahead of the live site until the next deploy.
 
 ## How it works
 
-Nav: Feed, Announcements, Orgs, Activity.
+Nav: Feed, Orgs, Account.
 
-Announcements and Orgs have three filters: All, Following, My orgs. Following does not include orgs you created or posts you wrote.
+Feed and Orgs have three filters: All, Following, My orgs. Following does not include orgs you created or posts you wrote.
 
 Settings has one account type:
 

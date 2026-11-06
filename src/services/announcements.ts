@@ -36,6 +36,7 @@ function mapAnnouncement(id: string, data: Record<string, unknown>): Announcemen
     schedule: data.schedule === 'weekly' ? 'weekly' : 'once',
     repeatDays: Array.isArray(data.repeatDays) ? data.repeatDays.map(Number) : [],
     weekOf: data.weekOf == null ? null : Number(data.weekOf),
+    imageUrl: data.imageUrl ? String(data.imageUrl) : undefined,
   }
 }
 
@@ -52,6 +53,7 @@ export async function createAnnouncement(input: {
   schedule: 'once' | 'weekly'
   repeatDays: number[]
   weekOf: number | null
+  imageUrl?: string
 }): Promise<string> {
   const database = requireDb()
   const ref = await addDoc(collection(database, 'announcements'), {
@@ -70,6 +72,7 @@ export async function createAnnouncement(input: {
     schedule: input.schedule,
     repeatDays: input.repeatDays,
     weekOf: input.weekOf,
+    imageUrl: input.imageUrl ?? '',
   })
   return ref.id
 }
@@ -86,6 +89,7 @@ export async function updateAnnouncement(
     schedule: 'once' | 'weekly'
     repeatDays: number[]
     weekOf: number | null
+    imageUrl?: string
   },
 ): Promise<void> {
   const database = requireDb()
@@ -99,6 +103,7 @@ export async function updateAnnouncement(
     schedule: input.schedule,
     repeatDays: input.repeatDays,
     weekOf: input.weekOf,
+    imageUrl: input.imageUrl ?? '',
   })
 }
 

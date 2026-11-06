@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useOrgAccess } from '../lib/orgAccess'
+import { coverImage } from '../lib/images'
 import { formatWhen } from '../lib/schedule'
 import type { Announcement } from '../types'
 import { OrgMarks } from './OrgMarks'
@@ -22,6 +23,9 @@ export function AnnouncementCard({ announcement }: { announcement: Announcement 
 
   return (
     <article className="announcement-card">
+      <Link to={`/a/${announcement.id}`} className="announcement-card__cover" tabIndex={-1} aria-hidden="true">
+        <img src={coverImage(announcement, 800, 300)} alt="" loading="lazy" />
+      </Link>
       <div className="announcement-card__meta">
         {user ? <span className="pill">{author}</span> : null}
         <Link className="name-link" to={`/org/${announcement.orgId}`}>

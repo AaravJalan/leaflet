@@ -32,9 +32,8 @@ export function Layout() {
           <NavLink to="/" end>
             Feed
           </NavLink>
-          <NavLink to="/announcements">Announcements</NavLink>
           <NavLink to="/orgs">Orgs</NavLink>
-          <NavLink to="/activity">Activity</NavLink>
+          <NavLink to="/account">Account</NavLink>
         </nav>
         <div className="topbar__actions">
           {!configured ? <span className="setup-chip">Missing .env</span> : null}

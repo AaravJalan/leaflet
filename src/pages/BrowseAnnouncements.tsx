@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AnnouncementCard } from '../components/AnnouncementCard'
 import { ScopeToggle, type Scope } from '../components/ScopeToggle'
 import { SetupBanner } from '../components/SetupBanner'
@@ -8,16 +8,18 @@ import { useDemo } from '../context/DemoContext'
 import { loadAnnouncements, loadOrganizations } from '../services/catalog'
 import type { Announcement } from '../types'
 
-function readScope(value: string | null): Scope {
-  if (value === 'following' || value === 'mine') return value
-  return 'all'
+function readScope(value: string | null, fallback: Scope): Scope {
+  if (value === 'following' || value === 'mine' || value === 'all') return value
+  return fallback
 }
 
 export function BrowseAnnouncements() {
   const { user, profile } = useAuth()
   const demo = useDemo()
   const [params, setParams] = useSearchParams()
-  const scope = user ? readScope(params.get('scope')) : 'all'
+  const followsAny = demo.follows.length > 0
+  const scope = user ? readScope(params.get('scope'), followsAny ? 'following' : 'all') : 'all'
+  const showFollowHint = Boolean(user) && !followsAny && !params.get('scope')
   const [items, setItems] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -56,7 +58,7 @@ export function BrowseAnnouncements() {
       <section className="section">
         <div className="section__head">
           <div>
-            <h1>Announcements</h1>
+            <h1>Feed</h1>
             <p className="lede lede--tight">
               {user ? 'Filter by everything, followed orgs, or created orgs.' : 'Public announcements.'}
             </p>
@@ -64,10 +66,15 @@ export function BrowseAnnouncements() {
           {user ? (
             <ScopeToggle
               value={scope}
-              onChange={(next) => setParams(next === 'all' ? {} : { scope: next })}
+              onChange={(next) => setParams({ scope: next })}
             />
           ) : null}
         </div>
+        {showFollowHint ? (
+          <p className="muted">
+            <Link to="/orgs">Follow orgs</Link> to personalize your feed.
+          </p>
+        ) : null}
         {loading ? <p className="muted">Loading…</p> : null}
         {!loading && items.length === 0 ? <p className="empty">Nothing in this view.</p> : null}
         <div className="stack">

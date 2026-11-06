@@ -75,6 +75,8 @@ export type Announcement = {
   schedule: 'once' | 'weekly'
   repeatDays: number[]
   weekOf: number | null
+  /** Optional cover image. Falls back to a placeholder until uploads exist. */
+  imageUrl?: string
   mock?: boolean
 }
 

@@ -7,6 +7,7 @@ import { useDemo } from '../context/DemoContext'
 import { buildWhen, toDateInput, toDateTimeInput, toTimeInput } from '../lib/schedule'
 import { loadAnnouncement } from '../services/catalog'
 import { updateAnnouncement } from '../services/announcements'
+import { CoverPicker } from '../components/CoverPicker'
 import type { Announcement } from '../types'
 
 export function EditAnnouncement() {
@@ -26,6 +27,7 @@ export function EditAnnouncement() {
   const [endTime, setEndTime] = useState('')
   const [days, setDays] = useState<number[]>([])
   const [link, setLink] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -47,6 +49,7 @@ export function EditAnnouncement() {
         setEndTime(toTimeInput(next.endsAt))
         setDays(next.repeatDays ?? [])
         setLink(next.link)
+        setImageUrl(next.imageUrl ?? '')
       }
       setLoading(false)
     })
@@ -67,6 +70,7 @@ export function EditAnnouncement() {
       description: description.trim(),
       location: location.trim(),
       link: link.trim(),
+      imageUrl,
       ...buildWhen(schedule, startsAt, endsAt, weekOf, startTime, endTime, days),
     }
     try {
@@ -136,6 +140,7 @@ export function EditAnnouncement() {
               Link
               <input type="url" value={link} onChange={(e) => setLink(e.target.value)} />
             </label>
+            <CoverPicker value={imageUrl} onChange={setImageUrl} />
             {error ? <p className="error">{error}</p> : null}
             <div className="hero__actions">
               <button className="btn" type="submit" disabled={busy}>

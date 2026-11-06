@@ -12,7 +12,6 @@ import { EditAnnouncement } from './pages/EditAnnouncement'
 import { EditOrg } from './pages/EditOrg'
 import { CreateAnnouncement } from './pages/CreateAnnouncement'
 import { CreateOrg } from './pages/CreateOrg'
-import { Home } from './pages/Home'
 import { OrgDetail } from './pages/OrgDetail'
 
 export default function App() {
@@ -22,12 +21,13 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="announcements" element={<BrowseAnnouncements />} />
+            <Route index element={<BrowseAnnouncements />} />
+            <Route path="announcements" element={<Navigate to="/" replace />} />
             <Route path="orgs" element={<BrowseOrgs />} />
-            <Route path="activity" element={<Activity />} />
+            <Route path="account" element={<Activity />} />
+            <Route path="activity" element={<Navigate to="/account" replace />} />
             <Route path="browse" element={<Navigate to="/orgs" replace />} />
-            <Route path="inbox" element={<Navigate to="/announcements?scope=following" replace />} />
+            <Route path="inbox" element={<Navigate to="/?scope=following" replace />} />
             <Route path="me" element={<Navigate to="/orgs?scope=mine" replace />} />
             <Route path="auth" element={<Auth />} />
             <Route path="settings" element={<Settings />} />

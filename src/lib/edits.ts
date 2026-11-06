@@ -24,6 +24,7 @@ export type PostEdit = {
   schedule?: 'once' | 'weekly'
   repeatDays?: number[]
   weekOf?: number | null
+  imageUrl?: string
 }
 
 function read<T>(key: string, fallback: T): T {

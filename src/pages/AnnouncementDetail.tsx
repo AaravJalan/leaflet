@@ -9,6 +9,7 @@ import { OrgMarks } from '../components/OrgMarks'
 import { loadAnnouncement } from '../services/catalog'
 import { deleteAnnouncement } from '../services/announcements'
 import type { Announcement } from '../types'
+import { coverImage } from '../lib/images'
 
 export function AnnouncementDetail() {
   const { announcementId = '' } = useParams()
@@ -82,6 +83,7 @@ export function AnnouncementDetail() {
 
       {item ? (
         <article className="panel">
+          <img className="announcement-cover" src={coverImage(item, 1200, 500)} alt="" />
           <div className="org-hero__meta">
             {user ? (
               <span className="pill">

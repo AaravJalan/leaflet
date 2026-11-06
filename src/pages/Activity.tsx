@@ -95,7 +95,7 @@ export function Activity() {
       <section className="section">
         <div className="section__head">
           <div>
-            <h1>Activity</h1>
+            <h1>Account</h1>
             <p className="lede lede--tight">
               {user
                 ? 'Who allowed editing, who removed it, and what can be posted.'

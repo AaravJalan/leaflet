@@ -5,6 +5,8 @@ import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
 import { mockPosterIds } from '../data/mock'
+import { CoverPicker } from '../components/CoverPicker'
+import { COVER_OPTIONS } from '../lib/images'
 import { buildWhen } from '../lib/schedule'
 import { createAnnouncement } from '../services/announcements'
 import { loadOrganization } from '../services/catalog'
@@ -23,6 +25,7 @@ export function CreateAnnouncement() {
   const [location, setLocation] = useState('')
   const [startsAt, setStartsAt] = useState('')
   const [link, setLink] = useState('')
+  const [imageUrl, setImageUrl] = useState(COVER_OPTIONS[0])
   const [endsAt, setEndsAt] = useState('')
   const [schedule, setSchedule] = useState<'once' | 'weekly'>('once')
   const [weekOf, setWeekOf] = useState('')
@@ -104,6 +107,7 @@ export function CreateAnnouncement() {
           createdAt: Date.now(),
           createdBy: user.uid,
           createdByName,
+          imageUrl,
           mock: true,
           ...when,
         })
@@ -118,6 +122,7 @@ export function CreateAnnouncement() {
         link,
         createdBy: user.uid,
         createdByName,
+        imageUrl,
         ...when,
       })
       navigate(`/a/${id}`)
@@ -196,6 +201,7 @@ export function CreateAnnouncement() {
                 placeholder="https://..."
               />
             </label>
+            <CoverPicker value={imageUrl} onChange={setImageUrl} />
             {error ? <p className="error">{error}</p> : null}
             <div className="hero__actions">
               <button className="btn" type="submit" disabled={busy}>
