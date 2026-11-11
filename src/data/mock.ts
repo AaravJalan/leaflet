@@ -1,40 +1,28 @@
-import type { Announcement, Organization, OrgMember, PermissionEvent, UserProfile } from '../types'
+import type { Announcement, Organization, OrgMember, UserProfile } from '../types'
 
-const ME = '__me__'
 const hour = 60 * 60 * 1000
 
 type MockOrg = Organization & { posterIds: string[] }
-type MockPost = Omit<
-  Announcement,
-  'orgName' | 'orgType' | 'createdByName' | 'schedule' | 'repeatDays' | 'weekOf'
->
+
+const NAMES: Record<string, { name: string; email: string }> = {
+  'mock-jordan': { name: 'Jordan Lee', email: 'jordan@example.com' },
+  'mock-priya': { name: 'Priya Shah', email: 'priya@example.com' },
+  'mock-sam': { name: 'Sam Ortiz', email: 'sam@example.com' },
+}
 
 const ORGS: MockOrg[] = [
   {
-    id: 'mock-block-club',
-    name: 'Rogers Park Block Club',
-    slug: 'rogers-park-block-club',
-    description: 'Block updates and alley work in Rogers Park.',
+    id: 'mock-evanston',
+    name: 'Evanston Neighborhood Cleanup',
+    slug: 'evanston-neighborhood-cleanup',
+    description: 'Block cleanups and park days in Evanston.',
     type: 'Neighborhood',
-    ownerId: ME,
-    ownerName: 'You',
-    location: 'Rogers Park',
+    ownerId: 'mock-jordan',
+    ownerName: 'Jordan Lee',
+    location: 'Church St & Benson Ave, Evanston',
     createdAt: 0,
     mock: true,
-    posterIds: [ME],
-  },
-  {
-    id: 'mock-compost',
-    name: 'Campus Compost Crew',
-    slug: 'campus-compost-crew',
-    description: 'Campus compost drops and bin news.',
-    type: 'Campus',
-    ownerId: ME,
-    ownerName: 'You',
-    location: 'Tech courtyard',
-    createdAt: 0,
-    mock: true,
-    posterIds: [ME, 'mock-priya'],
+    posterIds: ['mock-jordan'],
   },
   {
     id: 'mock-mutual-aid',
@@ -47,33 +35,7 @@ const ORGS: MockOrg[] = [
     location: 'Norris University Center',
     createdAt: 0,
     mock: true,
-    posterIds: ['mock-priya', ME],
-  },
-  {
-    id: 'mock-pantry',
-    name: 'Foster Street Pantry',
-    slug: 'foster-street-pantry',
-    description: 'Food restocks and pantry hours.',
-    type: 'Mutual Aid',
-    ownerId: 'mock-jordan',
-    ownerName: 'Jordan Lee',
-    location: 'Foster St pantry',
-    createdAt: 0,
-    mock: true,
-    posterIds: ['mock-jordan', ME],
-  },
-  {
-    id: 'mock-evanston',
-    name: 'Evanston Neighborhood Cleanup',
-    slug: 'evanston-neighborhood-cleanup',
-    description: 'Block cleanups and park days in Evanston.',
-    type: 'Neighborhood',
-    ownerId: 'mock-sam',
-    ownerName: 'Sam Ortiz',
-    location: 'Church St & Benson Ave, Evanston',
-    createdAt: 0,
-    mock: true,
-    posterIds: ['mock-sam'],
+    posterIds: ['mock-priya', 'mock-sam'],
   },
   {
     id: 'mock-lakeside',
@@ -88,46 +50,38 @@ const ORGS: MockOrg[] = [
     mock: true,
     posterIds: ['mock-sam'],
   },
+  {
+    id: 'mock-arts',
+    name: 'Rogers Park Arts Collective',
+    slug: 'rogers-park-arts-collective',
+    description: 'Open studios and neighborhood art nights.',
+    type: 'Arts & Culture',
+    ownerId: 'mock-jordan',
+    ownerName: 'Jordan Lee',
+    location: '1520 W Morse Ave',
+    createdAt: 0,
+    mock: true,
+    posterIds: ['mock-jordan', 'mock-priya'],
+  },
 ]
+
+type MockPost = Omit<
+  Announcement,
+  'orgName' | 'orgType' | 'createdByName' | 'schedule' | 'repeatDays' | 'weekOf' | 'orgOwnerId' | 'orgCreatedAt'
+>
 
 const POSTS: MockPost[] = [
   {
-    id: 'mock-post-alley',
-    orgId: 'mock-block-club',
-    title: 'Alley planters this Sunday',
-    description: 'Planters go in behind 800 Dempster this Sunday.',
-    location: 'Behind 800 Dempster',
+    id: 'mock-post-sweep',
+    orgId: 'mock-evanston',
+    title: 'Saturday riverbank sweep',
+    description: 'Gloves and bags provided. Meet at the Church St bridge.',
+    location: 'Church St & Benson Ave',
     startsAt: 0,
-    link: '',
     endsAt: null,
-    createdAt: 0,
-    createdBy: ME,
-    mock: true,
-  },
-  {
-    id: 'mock-post-compost',
-    orgId: 'mock-compost',
-    title: 'First bin drop',
-    description: 'First compost bins arrive in the Tech courtyard.',
-    location: 'Tech courtyard',
-    startsAt: 0,
     link: '',
-    endsAt: null,
     createdAt: 0,
-    createdBy: ME,
-    mock: true,
-  },
-  {
-    id: 'mock-post-compost-priya',
-    orgId: 'mock-compost',
-    title: 'Extra buckets by the arch',
-    description: 'Extra buckets are by the arch.',
-    location: 'The Arch',
-    startsAt: 0,
-    link: '',
-    endsAt: null,
-    createdAt: 0,
-    createdBy: 'mock-priya',
+    createdBy: 'mock-jordan',
     mock: true,
   },
   {
@@ -137,36 +91,10 @@ const POSTS: MockPost[] = [
     description: 'Drivers and riders pair up in the Norris lobby.',
     location: 'Norris University Center',
     startsAt: 0,
-    link: '',
     endsAt: null,
+    link: '',
     createdAt: 0,
     createdBy: 'mock-priya',
-    mock: true,
-  },
-  {
-    id: 'mock-post-pantry',
-    orgId: 'mock-pantry',
-    title: 'Thursday restock',
-    description: 'Pantry restock this Thursday.',
-    location: 'Foster St pantry',
-    startsAt: 0,
-    link: '',
-    endsAt: null,
-    createdAt: 0,
-    createdBy: 'mock-jordan',
-    mock: true,
-  },
-  {
-    id: 'mock-post-sweep',
-    orgId: 'mock-evanston',
-    title: 'Saturday riverbank sweep',
-    description: 'Gloves and bags provided. Meet at the Church St bridge.',
-    location: 'Church St & Benson Ave',
-    startsAt: 0,
-    link: '',
-    endsAt: null,
-    createdAt: 0,
-    createdBy: 'mock-sam',
     mock: true,
   },
   {
@@ -176,8 +104,8 @@ const POSTS: MockPost[] = [
     description: 'Tools on site along the lakefront path.',
     location: 'Clark Street Beach',
     startsAt: 0,
-    link: '',
     endsAt: null,
+    link: '',
     createdAt: 0,
     createdBy: 'mock-sam',
     mock: true,
@@ -189,96 +117,83 @@ const POSTS: MockPost[] = [
     description: 'Borrow rakes and wheelbarrows Saturday morning.',
     location: 'Volunteer shed, south lot',
     startsAt: 0,
-    link: '',
     endsAt: null,
+    link: '',
     createdAt: 0,
     createdBy: 'mock-sam',
+    mock: true,
+  },
+  {
+    id: 'mock-post-studio',
+    orgId: 'mock-arts',
+    title: 'Open studio night',
+    description: 'Local makers open their doors from 6 to 9pm.',
+    location: '1520 W Morse Ave',
+    startsAt: 0,
+    endsAt: null,
+    link: '',
+    createdAt: 0,
+    createdBy: 'mock-priya',
     mock: true,
   },
 ]
 
 const AGES: Record<string, number> = {
-  'mock-block-club': 12 * 24 * hour,
-  'mock-compost': 8 * 24 * hour,
-  'mock-mutual-aid': 3 * 24 * hour,
-  'mock-pantry': 6 * 24 * hour,
   'mock-evanston': 5 * 24 * hour,
+  'mock-mutual-aid': 3 * 24 * hour,
   'mock-lakeside': 6 * hour,
-  'mock-post-alley': 8 * 24 * hour,
-  'mock-post-compost': 2 * 24 * hour,
-  'mock-post-compost-priya': 20 * hour,
-  'mock-post-grocery': 18 * hour,
-  'mock-post-pantry': 10 * hour,
+  'mock-arts': 10 * 24 * hour,
   'mock-post-sweep': 2 * 24 * hour,
+  'mock-post-grocery': 18 * hour,
   'mock-post-dune': 4 * hour,
   'mock-post-hours': 3 * hour,
+  'mock-post-studio': 30 * hour,
 }
 
 function stamp(id: string) {
   return Date.now() - (AGES[id] ?? hour)
 }
 
-export function mockOrganizations(userId: string | null, displayName: string): Organization[] {
-  return ORGS.map((org) => {
-    const { posterIds: _posters, ...rest } = org
-    const yours = org.ownerId === ME
-    return {
-      ...rest,
-      ownerId: yours ? userId || ME : org.ownerId,
-      ownerName: yours ? displayName || 'You' : org.ownerName,
-      createdAt: stamp(org.id),
-    }
-  })
+/** Shared sample orgs. Same for every visitor. Never owned by the signed-in user. */
+export function mockOrganizations(_userId: string | null = null, _displayName = ''): Organization[] {
+  return ORGS.map(({ posterIds: _posters, ...org }) => ({
+    ...org,
+    createdAt: stamp(org.id),
+  }))
 }
 
-export function mockPosterIds(orgId: string, userId: string | null): string[] {
-  const org = ORGS.find((item) => item.id === orgId)
-  if (!org) return []
-  return org.posterIds.map((id) => (id === ME ? userId || ME : id))
+export function mockPosterIds(orgId: string, _userId: string | null): string[] {
+  return ORGS.find((org) => org.id === orgId)?.posterIds ?? []
 }
 
-export function mockMembers(orgId: string, userId: string | null, displayName: string): OrgMember[] {
+export function mockMembers(orgId: string, _userId: string | null, _displayName: string): OrgMember[] {
   const org = ORGS.find((item) => item.id === orgId)
   if (!org) return []
-  const names: Record<string, { name: string; email: string }> = {
-    'mock-jordan': { name: 'Jordan Lee', email: 'jordan@example.com' },
-    'mock-priya': { name: 'Priya Shah', email: 'priya@example.com' },
-    'mock-sam': { name: 'Sam Ortiz', email: 'sam@example.com' },
-  }
-  const ownerId = org.ownerId === ME ? userId || ME : org.ownerId
   return org.posterIds
-    .map((id) => (id === ME ? userId || ME : id))
-    .filter((id) => id !== ownerId)
+    .filter((id) => id !== org.ownerId)
     .map((id) => ({
       id,
       orgId,
       userId: id,
-      email: id === (userId || ME) ? '' : names[id]?.email || '',
-      displayName: id === (userId || ME) ? displayName || 'You' : names[id]?.name || 'Poster',
-      addedBy: ownerId,
+      email: NAMES[id]?.email || '',
+      displayName: NAMES[id]?.name || 'Poster',
+      addedBy: org.ownerId,
       createdAt: stamp(orgId),
     }))
 }
 
-export function mockAnnouncements(userId: string | null): Announcement[] {
-  const orgs = mockOrganizations(userId, 'You')
+export function mockAnnouncements(_userId: string | null = null): Announcement[] {
+  const orgs = mockOrganizations()
   return POSTS.map((post) => {
     const org = orgs.find((item) => item.id === post.orgId)
-    const createdBy = post.createdBy === ME ? userId || ME : post.createdBy
-    const names: Record<string, string> = {
-      'mock-jordan': 'Jordan Lee',
-      'mock-priya': 'Priya Shah',
-      'mock-sam': 'Sam Ortiz',
-    }
     return {
       ...post,
       orgName: org?.name || '',
       orgType: org?.type || 'Other',
-      createdBy,
-      createdByName: createdBy === (userId || ME) && post.createdBy === ME ? 'You' : names[post.createdBy] || 'Someone',
       orgOwnerId: org?.ownerId,
       orgCreatedAt: org?.createdAt,
-      schedule: 'once',
+      createdByName: NAMES[post.createdBy]?.name || 'Someone',
+      schedule: 'once' as const,
       repeatDays: [],
       weekOf: null,
       createdAt: stamp(post.id),
@@ -287,60 +202,16 @@ export function mockAnnouncements(userId: string | null): Announcement[] {
   })
 }
 
-export const MOCK_ACCOUNTS: UserProfile[] = [
-  {
-    uid: 'mock-jordan',
-    email: 'jordan@example.com',
-    displayName: 'Jordan Lee',
-    createdAt: 0,
-    accountType: 'organizer',
-  },
-  {
-    uid: 'mock-priya',
-    email: 'priya@example.com',
-    displayName: 'Priya Shah',
-    createdAt: 0,
-    accountType: 'both',
-  },
-  {
-    uid: 'mock-sam',
-    email: 'sam@example.com',
-    displayName: 'Sam Ortiz',
-    createdAt: 0,
-    accountType: 'volunteer',
-  },
-]
+export const MOCK_ACCOUNTS: UserProfile[] = Object.entries(NAMES).map(([uid, person]) => ({
+  uid,
+  email: person.email,
+  displayName: person.name,
+  createdAt: 0,
+  accountType: uid === 'mock-sam' ? 'volunteer' : 'both',
+}))
 
-export function mockPermissionEvents(userId: string): PermissionEvent[] {
-  return [
-    {
-      id: 'mock-allowed-aid',
-      type: 'allowed',
-      orgId: 'mock-mutual-aid',
-      orgName: 'NU Mutual Aid',
-      actorId: 'mock-priya',
-      actorName: 'Priya Shah',
-      targetUserId: userId,
-      createdAt: Date.now() - 2 * 24 * hour,
-    },
-    {
-      id: 'mock-removed-lake',
-      type: 'removed',
-      orgId: 'mock-lakeside',
-      orgName: 'Lakeside Volunteers',
-      actorId: 'mock-sam',
-      actorName: 'Sam Ortiz',
-      targetUserId: userId,
-      createdAt: Date.now() - 5 * hour,
-    },
-  ]
+export function mockPermissionEvents(_userId: string) {
+  return []
 }
 
-export const DEFAULT_MOCK_FOLLOWS = ['mock-evanston', 'mock-mutual-aid']
-
-export const RETIRED_SAMPLE_NAMES = [
-  'evanston neighborhood cleanup',
-  'nu mutual aid',
-  'rogers park arts collective',
-  'lakeside volunteers',
-]
+export const DEFAULT_MOCK_FOLLOWS: string[] = []

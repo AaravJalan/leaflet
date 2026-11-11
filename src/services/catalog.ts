@@ -1,4 +1,4 @@
-import { mockAnnouncements, mockOrganizations, RETIRED_SAMPLE_NAMES } from '../data/mock'
+import { mockAnnouncements, mockOrganizations } from '../data/mock'
 import { applyOrgs, applyPosts, readHiddenOrgs } from '../lib/edits'
 import { listRecentAnnouncements, listAnnouncementsByOrg, getAnnouncement } from './announcements'
 import { getOrganization, listOrganizations } from './organizations'
@@ -8,26 +8,20 @@ function byNewest<T extends { createdAt: number }>(items: T[]) {
   return [...items].sort((a, b) => b.createdAt - a.createdAt)
 }
 
-const RETIRED = new Set(RETIRED_SAMPLE_NAMES)
-
-function retiredName(name: string) {
-  return RETIRED.has(name.trim().toLowerCase())
-}
-
 export async function loadOrganizations(filters?: {
   type?: OrgType | 'All'
   search?: string
   userId?: string | null
   displayName?: string
 }): Promise<Organization[]> {
-  const mocks = mockOrganizations(filters?.userId ?? null, filters?.displayName || 'You')
+  const samples = mockOrganizations(filters?.userId ?? null, filters?.displayName || '')
   let remote: Organization[] = []
   try {
     remote = await listOrganizations({ type: filters?.type, search: filters?.search })
   } catch {
     remote = []
   }
-  let orgs = [...remote.filter((org) => !retiredName(org.name)), ...mocks]
+  let orgs = [...remote, ...samples]
   if (filters?.type && filters.type !== 'All') {
     orgs = orgs.filter((org) => org.type === filters.type)
   }
@@ -47,8 +41,8 @@ export async function loadOrganization(
   userId: string | null,
   displayName: string,
 ): Promise<Organization | null> {
-  const mock = applyOrgs(mockOrganizations(userId, displayName)).find((org) => org.id === id)
-  if (mock) return mock
+  const sample = applyOrgs(mockOrganizations(userId, displayName)).find((org) => org.id === id)
+  if (sample) return sample
   if (readHiddenOrgs().includes(id)) return null
   try {
     const remote = await getOrganization(id)
@@ -68,12 +62,11 @@ export async function loadAnnouncements(
   } catch {
     remote = []
   }
-  const mocks = mockAnnouncements(userId)
-  const orgs = await loadOrganizations({ userId, displayName: 'You' })
+  const samples = mockAnnouncements(userId)
+  const orgs = await loadOrganizations({ userId, displayName: '' })
   const ids = new Set<string>()
   return applyPosts(
-    byNewest([...localPosts, ...remote, ...mocks])
-      .filter((item) => !item.mock && retiredName(item.orgName) ? false : true)
+    byNewest([...localPosts, ...remote, ...samples])
       .filter((item) => {
         if (ids.has(item.id)) return false
         ids.add(item.id)
@@ -93,10 +86,10 @@ export async function loadAnnouncementsForOrg(
   localPosts: Announcement[] = [],
 ): Promise<Announcement[]> {
   const local = localPosts.filter((post) => post.orgId === orgId)
-  const mocks = mockAnnouncements(userId).filter((post) => post.orgId === orgId)
+  const samples = mockAnnouncements(userId).filter((post) => post.orgId === orgId)
   if (orgId.startsWith('mock-')) {
-    const org = mockOrganizations(userId, 'You').find((item) => item.id === orgId)
-    return applyPosts(byNewest([...local, ...mocks])).map((item) =>
+    const org = mockOrganizations(userId, '').find((item) => item.id === orgId)
+    return applyPosts(byNewest([...local, ...samples])).map((item) =>
       org ? { ...item, orgOwnerId: org.ownerId, orgCreatedAt: org.createdAt } : item,
     )
   }
@@ -115,8 +108,8 @@ export async function loadAnnouncement(
   localPosts: Announcement[] = [],
 ): Promise<Announcement | null> {
   const local = localPosts.find((post) => post.id === id)
-  const mock = mockAnnouncements(userId).find((post) => post.id === id)
-  let found = local || mock
+  const sample = mockAnnouncements(userId).find((post) => post.id === id)
+  let found = local || sample
   if (!found) {
     try {
       found = (await getAnnouncement(id)) || undefined

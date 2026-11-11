@@ -1,7 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { readHiddenOrgs, readHiddenPosts, readOrgEdits, readPostEdits } from '../lib/edits'
-import { DEFAULT_MOCK_FOLLOWS } from '../data/mock'
 import type { Announcement, OrgMember } from '../types'
 import { DemoProvider, useDemo } from './DemoContext'
 
@@ -31,8 +30,8 @@ describe('useDemo', () => {
 })
 
 describe('follows', () => {
-  it('defaults to the sample follows', () => {
-    expect(setup().current.follows).toEqual(DEFAULT_MOCK_FOLLOWS)
+  it('defaults to an empty follow list', () => {
+    expect(setup().current.follows).toEqual([])
   })
 
   it('restores saved follows, including an empty list', () => {
@@ -40,10 +39,10 @@ describe('follows', () => {
     expect(setup().current.follows).toEqual([])
   })
 
-  it('upgrades the old single sample follow', () => {
-    localStorage.setItem('leaflet-follows', '["mock-evanston"]')
-    expect(setup().current.follows).toEqual(DEFAULT_MOCK_FOLLOWS)
-    expect(stored('leaflet-follows')).toEqual(DEFAULT_MOCK_FOLLOWS)
+  it('drops old mock follows from storage', () => {
+    localStorage.setItem('leaflet-follows', '["mock-evanston","real-org"]')
+    expect(setup().current.follows).toEqual(['real-org'])
+    expect(stored('leaflet-follows')).toEqual(['real-org'])
   })
 
   it('follows and unfollows, and persists it', () => {

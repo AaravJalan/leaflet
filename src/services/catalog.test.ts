@@ -23,20 +23,28 @@ vi.mock('./organizations', () => ({
 }))
 
 vi.mock('../data/mock', () => ({
-  RETIRED_SAMPLE_NAMES: ['retired org'],
-  mockOrganizations: (userId: string | null) => [
+  mockOrganizations: () => [
     {
       id: 'mock-org',
       name: 'Middle Sample',
       description: 'Sample description',
       type: 'Campus',
-      ownerId: userId ?? 'nobody',
+      ownerId: 'mock-jordan',
+      ownerName: 'Jordan Lee',
       createdAt: 7,
       mock: true,
     },
   ],
   mockAnnouncements: () => [
-    { id: 'mock-post', orgId: 'mock-org', orgName: 'Middle Sample', createdAt: 50, mock: true },
+    {
+      id: 'mock-post',
+      orgId: 'mock-org',
+      orgName: 'Middle Sample',
+      createdAt: 50,
+      createdBy: 'mock-jordan',
+      createdByName: 'Jordan Lee',
+      mock: true,
+    },
   ],
 }))
 
@@ -60,19 +68,14 @@ beforeEach(() => {
 })
 
 describe('loadOrganizations', () => {
-  it('merges remote and sample orgs, sorted by name', async () => {
+  it('merges remote and shared sample orgs, sorted by name', async () => {
     vi.mocked(listOrganizations).mockResolvedValue([org('z', 'Zebra'), org('a', 'Apple')])
     expect(names(await loadOrganizations())).toEqual(['Apple', 'Middle Sample', 'Zebra'])
   })
 
-  it('still shows samples when Firestore fails', async () => {
+  it('still shows shared samples when Firestore fails', async () => {
     vi.mocked(listOrganizations).mockRejectedValue(new Error('offline'))
     expect(names(await loadOrganizations())).toEqual(['Middle Sample'])
-  })
-
-  it('drops retired sample names, ignoring case and padding', async () => {
-    vi.mocked(listOrganizations).mockResolvedValue([org('r', '  Retired ORG '), org('a', 'Apple')])
-    expect(names(await loadOrganizations())).toEqual(['Apple', 'Middle Sample'])
   })
 
   it('filters by type', async () => {
@@ -98,13 +101,13 @@ describe('loadOrganizations', () => {
     vi.mocked(listOrganizations).mockResolvedValue([org('a', 'Apple'), org('b', 'Banana')])
     hideOrg('a')
     saveOrgEdit('b', { name: 'Blueberry' })
-    expect(names(await loadOrganizations())).toEqual(['Middle Sample', 'Blueberry'].sort())
+    expect(names(await loadOrganizations())).toEqual(['Blueberry', 'Middle Sample'])
   })
 })
 
 describe('loadOrganization', () => {
-  it('finds a sample without calling Firestore', async () => {
-    expect((await loadOrganization('mock-org', 'me', 'Me'))?.ownerId).toBe('me')
+  it('finds a shared sample without calling Firestore', async () => {
+    expect((await loadOrganization('mock-org', 'me', 'Me'))?.ownerId).toBe('mock-jordan')
     expect(getOrganization).not.toHaveBeenCalled()
   })
 
@@ -128,7 +131,7 @@ describe('loadOrganization', () => {
 })
 
 describe('loadAnnouncements', () => {
-  it('merges local, remote, and sample posts newest first', async () => {
+  it('merges local, remote, and shared sample posts newest first', async () => {
     vi.mocked(listRecentAnnouncements).mockResolvedValue([post('r', 100)])
     expect(ids(await loadAnnouncements('me', [post('l', 200)]))).toEqual(['l', 'r', 'mock-post'])
   })
@@ -139,17 +142,12 @@ describe('loadAnnouncements', () => {
     expect(result.filter((item) => item.id === 'x').map((item) => item.title)).toEqual(['local'])
   })
 
-  it('drops posts from retired orgs', async () => {
-    vi.mocked(listRecentAnnouncements).mockResolvedValue([post('r', 100, { orgName: 'Retired Org' })])
-    expect(ids(await loadAnnouncements('me'))).toEqual(['mock-post'])
-  })
-
   it('adds owner details from the matching org', async () => {
     const [sample] = await loadAnnouncements('me')
-    expect(sample).toMatchObject({ orgOwnerId: 'me', orgCreatedAt: 7 })
+    expect(sample).toMatchObject({ orgOwnerId: 'mock-jordan', orgCreatedAt: 7 })
   })
 
-  it('still shows samples when Firestore fails', async () => {
+  it('still shows shared samples when Firestore fails', async () => {
     vi.mocked(listRecentAnnouncements).mockRejectedValue(new Error('offline'))
     expect(ids(await loadAnnouncements('me'))).toEqual(['mock-post'])
   })
@@ -171,7 +169,7 @@ describe('loadAnnouncementsForOrg', () => {
       post('other', 70, { orgId: 'elsewhere' }),
     ])
     expect(ids(result)).toEqual(['l', 'mock-post'])
-    expect(result[0]).toMatchObject({ orgOwnerId: 'me', orgCreatedAt: 7 })
+    expect(result[0]).toMatchObject({ orgOwnerId: 'mock-jordan', orgCreatedAt: 7 })
     expect(listAnnouncementsByOrg).not.toHaveBeenCalled()
   })
 
@@ -194,7 +192,7 @@ describe('loadAnnouncement', () => {
     expect(getAnnouncement).not.toHaveBeenCalled()
   })
 
-  it('finds a sample post without calling Firestore', async () => {
+  it('finds a shared sample post without calling Firestore', async () => {
     expect((await loadAnnouncement('mock-post', 'me'))?.id).toBe('mock-post')
     expect(getAnnouncement).not.toHaveBeenCalled()
   })

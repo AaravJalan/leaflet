@@ -87,7 +87,35 @@ select {
 .shell {
   width: min(980px, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 1rem 0 3rem;
+  padding: 0 0 3rem;
+}
+
+.feedback-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0 0 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 2px solid #0f3d24;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: linear-gradient(180deg, #229456 0%, var(--green) 100%);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(18, 36, 26, 0.18);
+}
+
+.feedback-bar:hover {
+  background: var(--green-dark);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(18, 36, 26, 0.24);
 }
 
 .topbar {
@@ -102,7 +130,7 @@ select {
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
   position: sticky;
-  top: 0.75rem;
+  top: 3.1rem;
   z-index: 20;
 }
 

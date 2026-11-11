@@ -59,13 +59,7 @@ Announcements can be one time, or weekly for a chosen week and weekdays. The pos
 
 ## Sample data
 
-Six sample orgs are always mixed in with real Firestore data:
-
-- Two you own (one is only you, one has another poster)
-- Two where you can post (you follow one)
-- Two where you cannot post (you follow one)
-
-There are eight sample announcements. Old seeded copies of the same org names are hidden so they do not show twice.
+A few shared sample orgs and posts always show for everyone. They are owned by demo accounts (Jordan, Priya, Sam), not by whoever is signed in. New accounts start with no orgs, posts, or follows of their own.
 
 ## Routes
 

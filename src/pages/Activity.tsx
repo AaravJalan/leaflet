@@ -6,7 +6,7 @@ import { OrgCard } from '../components/OrgCard'
 import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
-import { mockPermissionEvents, mockPosterIds } from '../data/mock'
+import { mockPosterIds } from '../data/mock'
 import { readPermissionLog } from '../lib/permissionLog'
 import { listPermissionEvents } from '../services/activity'
 import { loadAnnouncements, loadOrganizations } from '../services/catalog'
@@ -55,16 +55,13 @@ export function Activity() {
             }),
         )
       }
-      let notes: PermissionEvent[] = uid ? mockPermissionEvents(uid) : []
+      let notes: PermissionEvent[] = []
       if (uid) {
-        notes = [
-          ...notes,
-          ...readPermissionLog().filter((event) => event.targetUserId === uid),
-        ]
+        notes = readPermissionLog().filter((event) => event.targetUserId === uid)
         try {
           notes = [...notes, ...(await listPermissionEvents(uid))]
         } catch {
-          // Sample and local notes still show if the activity collection cannot be read.
+          // Local notes still show if the activity collection cannot be read.
         }
       }
       const seen = new Set<string>()

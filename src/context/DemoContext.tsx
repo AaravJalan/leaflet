@@ -6,7 +6,6 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { DEFAULT_MOCK_FOLLOWS } from '../data/mock'
 import { hideOrg, hidePost, saveOrgEdit, savePostEdit, type OrgEdit, type PostEdit } from '../lib/edits'
 import type { Announcement, OrgMember } from '../types'
 
@@ -22,6 +21,10 @@ function readJson<T>(key: string, fallback: T): T {
   } catch {
     return fallback
   }
+}
+
+function realFollows(ids: string[]) {
+  return ids.filter((id) => !id.startsWith('mock-'))
 }
 
 type DemoValue = {
@@ -45,14 +48,9 @@ const DemoContext = createContext<DemoValue | null>(null)
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [follows, setFollows] = useState<string[]>(() => {
-    const stored = localStorage.getItem(FOLLOWS)
-    if (stored == null) return DEFAULT_MOCK_FOLLOWS
-    const parsed = readJson<string[]>(FOLLOWS, [])
-    if (parsed.length === 1 && parsed[0] === 'mock-evanston') {
-      localStorage.setItem(FOLLOWS, JSON.stringify(DEFAULT_MOCK_FOLLOWS))
-      return DEFAULT_MOCK_FOLLOWS
-    }
-    return parsed
+    const next = realFollows(readJson<string[]>(FOLLOWS, []))
+    localStorage.setItem(FOLLOWS, JSON.stringify(next))
+    return next
   })
   const [extraPosters, setExtraPosters] = useState<Record<string, OrgMember[]>>(() =>
     readJson(EXTRA_POSTERS, {}),

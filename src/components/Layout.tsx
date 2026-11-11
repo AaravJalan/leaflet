@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useEffect } from 'react'
+import { FeedbackBanner } from './FeedbackBanner'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
 import { canOrganize } from '../lib/roles'
@@ -24,6 +25,7 @@ export function Layout() {
 
   return (
     <div className="shell">
+      <FeedbackBanner />
       <header className="topbar">
         <Link to="/" className="brand">
           Leaflet
