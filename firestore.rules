@@ -77,6 +77,15 @@ service cloud.firestore {
         );
     }
 
+    match /rsvps/{rsvpId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.id == rsvpId
+        && rsvpId == request.auth.uid + '_' + request.resource.data.announcementId;
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+
     match /subscriptions/{subscriptionId} {
       // Missing docs must be readable, or "am I subscribed?" throws
       // Missing or insufficient permissions.

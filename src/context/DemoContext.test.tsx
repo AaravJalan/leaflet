@@ -141,3 +141,17 @@ describe('edits', () => {
     expect(readHiddenPosts()).toEqual(['p2'])
   })
 })
+
+describe('rsvps', () => {
+  it('toggles going and saves it', () => {
+    const result = setup()
+    expect(result.current.isGoing('a')).toBe(false)
+    act(() => result.current.setGoing('a', true))
+    act(() => result.current.setGoing('a', true))
+    expect(result.current.rsvps).toEqual(['a'])
+    expect(stored('leaflet-rsvps')).toEqual(['a'])
+    act(() => result.current.setGoing('a', false))
+    expect(result.current.isGoing('a')).toBe(false)
+    expect(stored('leaflet-rsvps')).toEqual([])
+  })
+})

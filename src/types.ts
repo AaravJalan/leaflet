@@ -87,3 +87,11 @@ export type Subscription = {
   orgName: string
   createdAt: number
 }
+
+export type Rsvp = {
+  id: string
+  userId: string
+  userName: string
+  announcementId: string
+  createdAt: number
+}

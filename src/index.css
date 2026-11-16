@@ -1238,3 +1238,16 @@ a.user-chip:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* Sits at the right end of the action row. */
+.rsvp {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: auto;
+}
+
+.rsvp__names {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}

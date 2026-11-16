@@ -1,9 +1,10 @@
-import { addDoc, doc, getDoc, getDocs, setDoc, where } from 'firebase/firestore'
+import { addDoc, deleteDoc, doc, getDoc, getDocs, setDoc, where } from 'firebase/firestore'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PermissionEvent } from '../types'
 import { listPermissionEvents, recordPermissionEvent } from './activity'
 import { canUserPost, upsertOrgMember } from './members'
 import { createOrganization, getOrganization, listOrganizations } from './organizations'
+import { addRsvp, listRsvps, removeRsvp } from './rsvps'
 import { isSubscribed, subscribeToOrg } from './subscriptions'
 import { findUserByEmail, getUserProfile } from './users'
 
@@ -206,5 +207,35 @@ describe('activity', () => {
         createdAt: 0,
       },
     ])
+  })
+})
+
+describe('rsvps', () => {
+  it('writes one document per user and announcement', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(42)
+    await addRsvp({ userId: 'u', userName: 'Una', announcementId: 'a' })
+    expect(setDoc).toHaveBeenCalledWith('rsvps/u_a', {
+      id: 'u_a',
+      userId: 'u',
+      userName: 'Una',
+      announcementId: 'a',
+      createdAt: 42,
+    })
+  })
+
+  it('cancels by deleting the same document', async () => {
+    await removeRsvp('u', 'a')
+    expect(deleteDoc).toHaveBeenCalledWith('rsvps/u_a')
+  })
+
+  it('lists RSVPs for an announcement', async () => {
+    mockDocs([snapshot('u_a', { id: 'u_a', userId: 'u', userName: 'Una', announcementId: 'a', createdAt: 1 })])
+    expect(await listRsvps('a')).toHaveLength(1)
+    expect(where).toHaveBeenCalledWith('announcementId', '==', 'a')
+  })
+
+  it('throws without Firebase', async () => {
+    firebase.db = null
+    await expect(listRsvps('a')).rejects.toThrow('Firebase is not configured.')
   })
 })

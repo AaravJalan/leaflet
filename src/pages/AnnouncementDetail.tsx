@@ -8,7 +8,9 @@ import { formatWhen } from '../lib/schedule'
 import { OrgMarks } from '../components/OrgMarks'
 import { loadAnnouncement } from '../services/catalog'
 import { deleteAnnouncement } from '../services/announcements'
-import type { Announcement } from '../types'
+import { addRsvp, listRsvps, removeRsvp } from '../services/rsvps'
+import { isFirebaseConfigured } from '../lib/firebase'
+import type { Announcement, Rsvp } from '../types'
 import { coverImage } from '../lib/images'
 
 export function AnnouncementDetail() {
@@ -20,6 +22,8 @@ export function AnnouncementDetail() {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [rsvpState, setRsvpState] = useState<{ id: string; list: Rsvp[] }>({ id: '', list: [] })
+  const [rsvpBusy, setRsvpBusy] = useState(false)
 
   useEffect(() => {
     if (!announcementId) {
@@ -51,6 +55,62 @@ export function AnnouncementDetail() {
       cancelled = true
     }
   }, [announcementId, user, profile, demo.localPosts, demo.revision])
+
+  // Sample and local-only posts (and dev without Firebase) keep RSVPs in the browser.
+  const localOnly = Boolean(
+    item &&
+      (!isFirebaseConfigured || item.mock || item.id.startsWith('mock-') || item.id.startsWith('local-')),
+  )
+
+  useEffect(() => {
+    if (!item || localOnly) return
+    const id = item.id
+    let cancelled = false
+    listRsvps(id)
+      .then((list) => {
+        if (!cancelled) setRsvpState({ id, list })
+      })
+      .catch(() => {
+        // Count is optional; the page still works if RSVPs can't be read.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [item, localOnly])
+
+  // Ignore a list left over from a different announcement.
+  const rsvps = item && rsvpState.id === item.id ? rsvpState.list : []
+  const going = item
+    ? localOnly
+      ? demo.isGoing(item.id)
+      : rsvps.some((rsvp) => rsvp.userId === user?.uid)
+    : false
+  const goingCount = localOnly ? (going ? 1 : 0) : rsvps.length
+
+  async function toggleRsvp() {
+    if (!item || !user || rsvpBusy) return
+    setError('')
+    if (localOnly) {
+      demo.setGoing(item.id, !going)
+      return
+    }
+    setRsvpBusy(true)
+    try {
+      if (going) await removeRsvp(user.uid, item.id)
+      else {
+        await addRsvp({
+          userId: user.uid,
+          userName: profile?.displayName || user.displayName || user.email || 'Someone',
+          announcementId: item.id,
+        })
+      }
+      setRsvpState({ id: item.id, list: await listRsvps(item.id) })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update RSVP')
+    } finally {
+      setRsvpBusy(false)
+    }
+  }
 
   async function copyLink() {
     await navigator.clipboard.writeText(window.location.href)
@@ -132,7 +192,7 @@ export function AnnouncementDetail() {
           </dl>
 
           <div className="hero__actions">
-            <button type="button" className="btn" onClick={() => void copyLink()}>
+            <button type="button" className="btn btn--ghost" onClick={() => void copyLink()}>
               {copied ? 'Copied' : 'Copy link'}
             </button>
             {canEdit ? (
@@ -148,7 +208,28 @@ export function AnnouncementDetail() {
             <Link className="btn btn--ghost" to={`/org/${item.orgId}`}>
               View org
             </Link>
+            <div className="rsvp">
+              <span className="muted">{goingCount === 1 ? '1 going' : `${goingCount} going`}</span>
+              {user ? (
+                <button
+                  type="button"
+                  className={going ? 'btn btn--ghost' : 'btn'}
+                  aria-pressed={going}
+                  disabled={rsvpBusy}
+                  onClick={() => void toggleRsvp()}
+                >
+                  {going ? '✓ Going · Cancel RSVP' : 'RSVP'}
+                </button>
+              ) : (
+                <Link className="btn" to="/auth">
+                  Sign in to RSVP
+                </Link>
+              )}
+            </div>
           </div>
+          {canEdit && rsvps.length > 0 ? (
+            <p className="muted rsvp__names">Going: {rsvps.map((rsvp) => rsvp.userName).join(', ')}</p>
+          ) : null}
         </article>
       ) : null}
     </div>

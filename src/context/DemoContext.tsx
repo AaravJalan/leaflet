@@ -13,6 +13,7 @@ const FOLLOWS = 'leaflet-follows'
 const EXTRA_POSTERS = 'leaflet-extra-posters'
 const REMOVED_POSTERS = 'leaflet-removed-posters'
 const LOCAL_POSTS = 'leaflet-local-posts'
+const RSVPS = 'leaflet-rsvps'
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -31,6 +32,9 @@ type DemoValue = {
   follows: string[]
   isFollowing: (orgId: string) => boolean
   setFollowing: (orgId: string, on: boolean) => void
+  rsvps: string[]
+  isGoing: (announcementId: string) => boolean
+  setGoing: (announcementId: string, on: boolean) => void
   extraPosters: Record<string, OrgMember[]>
   removedPosterIds: Record<string, string[]>
   addPoster: (member: OrgMember) => void
@@ -60,6 +64,17 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   )
   const [localPosts, setLocalPosts] = useState<Announcement[]>(() => readJson(LOCAL_POSTS, []))
   const [revision, setRevision] = useState(0)
+  const [rsvps, setRsvps] = useState<string[]>(() => readJson<string[]>(RSVPS, []))
+
+  const setGoing = useCallback((announcementId: string, on: boolean) => {
+    setRsvps((current) => {
+      const has = current.includes(announcementId)
+      if (on === has) return current
+      const next = on ? [...current, announcementId] : current.filter((id) => id !== announcementId)
+      localStorage.setItem(RSVPS, JSON.stringify(next))
+      return next
+    })
+  }, [])
 
   const setFollowing = useCallback((orgId: string, on: boolean) => {
     setFollows((current) => {
@@ -144,6 +159,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       follows,
       isFollowing: (orgId) => follows.includes(orgId),
       setFollowing,
+      rsvps,
+      isGoing: (announcementId) => rsvps.includes(announcementId),
+      setGoing,
       extraPosters,
       removedPosterIds,
       addPoster,
@@ -159,6 +177,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     [
       follows,
       setFollowing,
+      rsvps,
+      setGoing,
       extraPosters,
       removedPosterIds,
       addPoster,
