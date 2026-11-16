@@ -1,24 +1,52 @@
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AnnouncementCard } from '../components/AnnouncementCard'
-import { OrgCard } from '../components/OrgCard'
 import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
 import { mockPosterIds } from '../data/mock'
 import { readPermissionLog } from '../lib/permissionLog'
+import { canOrganize } from '../lib/roles'
 import { listPermissionEvents } from '../services/activity'
 import { loadAnnouncements, loadOrganizations } from '../services/catalog'
 import { listOrgMembers } from '../services/members'
 import type { Announcement, Organization, PermissionEvent } from '../types'
+
+function orgHue(id: string) {
+  let hash = 0
+  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % 360
+  return hash
+}
+
+function initials(name: string) {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0]?.toUpperCase())
+      .join('') || '?'
+  )
+}
+
+function OrgAvatar({ org }: { org: Organization }) {
+  return (
+    <span className="org-avatar" style={{ background: `hsl(${orgHue(org.id)} 45% 42%)` }} aria-hidden="true">
+      {initials(org.name)}
+    </span>
+  )
+}
 
 export function Activity() {
   const { user, profile } = useAuth()
   const demo = useDemo()
   const [orgs, setOrgs] = useState<Organization[]>([])
   const [mine, setMine] = useState<Announcement[]>([])
-  const [inOrgs, setInOrgs] = useState<Announcement[]>([])
+  const [allPosts, setAllPosts] = useState<Announcement[]>([])
+  const [allOrgs, setAllOrgs] = useState<Organization[]>([])
+  const [params, setParams] = useSearchParams()
+  const selectedId = params.get('org')
   const [posterOrgIds, setPosterOrgIds] = useState<string[]>([])
   const [access, setAccess] = useState<PermissionEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -77,7 +105,8 @@ export function Activity() {
       setOrgs(allOrgs.filter((org) => uid && (org.ownerId === uid || canPostIds.has(org.id))))
       setPosterOrgIds([...canPostIds])
       setMine(uid ? posts.filter((post) => post.createdBy === uid) : [])
-      setInOrgs(posts.filter((post) => canPostIds.has(post.orgId)))
+      setAllPosts(posts)
+      setAllOrgs(allOrgs)
       setLoading(false)
     }
     void load()
@@ -86,68 +115,139 @@ export function Activity() {
     }
   }, [user, profile, demo.localPosts, demo.extraPosters, demo.removedPosterIds, demo.revision])
 
+  const followedOrgs = allOrgs.filter(
+    (org) => demo.follows.includes(org.id) && !orgs.some((mineOrg) => mineOrg.id === org.id),
+  )
+  const selected = selectedId ? allOrgs.find((org) => org.id === selectedId) ?? null : null
+  const selectedPosts = selected ? allPosts.filter((post) => post.orgId === selected.id) : []
+  const canPostSelected = selected ? posterOrgIds.includes(selected.id) : false
+  const select = (id: string | null) => setParams(id ? { org: id } : {})
+
+  if (!user) {
+    return (
+      <div className="page">
+        <SetupBanner />
+        <h1>Home</h1>
+        <p className="empty">
+          <Link to="/auth">Sign in</Link> to see your orgs.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="page">
       <SetupBanner />
-      <section className="section">
-        <div className="section__head">
-          <div>
-            <h1>Account</h1>
-            <p className="lede lede--tight">
-              {user
-                ? 'Who allowed editing, who removed it, and what can be posted.'
-                : 'Sign in to see account activity.'}
-            </p>
-          </div>
-        </div>
-        {!user ? (
-          <p className="empty">
-            <Link to="/auth">Sign in</Link> to see account activity.
-          </p>
-        ) : null}
-        {loading ? <p className="muted">Loading…</p> : null}
+      <div className="workspace">
+        <aside className="workspace__sidebar" aria-label="Your orgs">
+          <button
+            type="button"
+            className={`workspace__item${!selected ? ' is-active' : ''}`}
+            onClick={() => select(null)}
+          >
+            <span className="org-avatar org-avatar--home" aria-hidden="true">⌂</span>
+            <span className="workspace__name">Overview</span>
+          </button>
 
-        {user ? <h2 className="subhead">Editing access</h2> : null}
-        {user && access.length === 0 && !loading ? <p className="empty">No access changes yet.</p> : null}
-        <div className="access-list">
-          {access.map((event) => (
-            <article key={event.id} className="access-row">
-              <p>
-                <strong>{event.actorName}</strong>{' '}
-                {event.type === 'allowed'
-                  ? 'allowed you to edit posts in '
-                  : 'removed you from editing posts in '}
-                <Link to={`/org/${event.orgId}`}>{event.orgName}</Link>.
-              </p>
-              <span className="muted">{format(event.createdAt, 'MMM d, h:mm a')}</span>
-            </article>
-          ))}
-        </div>
-
-        {user ? <h2 className="subhead">Orgs on this account</h2> : null}
-        {user && orgs.length === 0 && !loading ? <p className="empty">None yet.</p> : null}
-        <div className="grid">
+          <p className="workspace__group">Your orgs</p>
+          {!loading && orgs.length === 0 ? <p className="muted workspace__hint">None yet.</p> : null}
           {orgs.map((org) => (
-            <OrgCard key={org.id} org={org} canPost={posterOrgIds.includes(org.id)} />
+            <button
+              key={org.id}
+              type="button"
+              className={`workspace__item${selected?.id === org.id ? ' is-active' : ''}`}
+              onClick={() => select(org.id)}
+            >
+              <OrgAvatar org={org} />
+              <span className="workspace__name">{org.name}</span>
+            </button>
           ))}
-        </div>
 
-        {user ? <h2 className="subhead">Posts from this account</h2> : null}
-        {user && mine.length === 0 && !loading ? <p className="empty">No posts yet.</p> : null}
-        <div className="stack">
-          {mine.map((item) => (
-            <AnnouncementCard key={item.id} announcement={item} />
+          {followedOrgs.length > 0 ? <p className="workspace__group">Following</p> : null}
+          {followedOrgs.map((org) => (
+            <button
+              key={org.id}
+              type="button"
+              className={`workspace__item${selected?.id === org.id ? ' is-active' : ''}`}
+              onClick={() => select(org.id)}
+            >
+              <OrgAvatar org={org} />
+              <span className="workspace__name">{org.name}</span>
+            </button>
           ))}
-        </div>
 
-        {user ? <h2 className="subhead">In those orgs</h2> : null}
-        {user && inOrgs.length === 0 && !loading ? <p className="empty">No announcements yet.</p> : null}
-        <div className="stack">
-          {inOrgs.map((item) => (
-            <AnnouncementCard key={item.id} announcement={item} />
-          ))}
-        </div>
-      </section>
+          {canOrganize(profile?.accountType) ? (
+            <Link className="quiet-link workspace__new" to="/orgs/new">
+              + Start a new org
+            </Link>
+          ) : null}
+        </aside>
+
+        <section className="workspace__main">
+          {loading ? <p className="muted">Loading…</p> : null}
+
+          {selected ? (
+            <>
+              <div className="section__head">
+                <div className="workspace__title">
+                  <OrgAvatar org={selected} />
+                  <div>
+                    <h1>{selected.name}</h1>
+                    <p className="muted">
+                      {selected.type}
+                      {selected.location ? ` · ${selected.location}` : ''} ·{' '}
+                      <Link to={`/org/${selected.id}`}>Org page</Link>
+                    </p>
+                  </div>
+                </div>
+                {canPostSelected ? (
+                  <Link className="btn" to={`/org/${selected.id}/new`}>
+                    New post
+                  </Link>
+                ) : null}
+              </div>
+              {!loading && selectedPosts.length === 0 ? <p className="empty">No posts yet.</p> : null}
+              <div className="stack">
+                {selectedPosts.map((item) => (
+                  <AnnouncementCard key={item.id} announcement={item} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <h1>Overview</h1>
+
+              <h2 className="subhead">Editing access</h2>
+              {access.length === 0 && !loading ? <p className="empty">No access changes yet.</p> : null}
+              <div className="access-list">
+                {access.map((event) => (
+                  <article key={event.id} className="access-row">
+                    <p>
+                      <strong>{event.actorName}</strong>{' '}
+                      {event.type === 'allowed'
+                        ? 'allowed you to edit posts in '
+                        : 'removed you from editing posts in '}
+                      <button type="button" className="link-button" onClick={() => select(event.orgId)}>
+                        {event.orgName}
+                      </button>
+                      .
+                    </p>
+                    <span className="muted">{format(event.createdAt, 'MMM d, h:mm a')}</span>
+                  </article>
+                ))}
+              </div>
+
+              <h2 className="subhead">Your posts</h2>
+              {mine.length === 0 && !loading ? <p className="empty">No posts yet.</p> : null}
+              <div className="stack">
+                {mine.map((item) => (
+                  <AnnouncementCard key={item.id} announcement={item} />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
     </div>
   )
 }

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule Tests Review</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&display=swap">
+<style>
+/* Layout: one reading column, same system as the schedule test summary. Verdict first, then strengths, then ranked gaps with a severity chip, then the prompt that produced it. */
+:root {
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --fg: #1d221c;
+  --muted: #5d665a;
+  --rule: #dfe3da;
+  --accent: #2f7a3e;
+  --accent-soft: #e4f0e3;
+  --code-bg: #eef1ea;
+  --warn: #9a5b00;
+  --warn-soft: #fbefd9;
+  --low: #4f5f8a;
+  --low-soft: #e6eaf5;
+  --display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121511; --surface: #1a1e19; --fg: #e5e9e1; --muted: #9aa494;
+    --rule: #2c3229; --accent: #7cc489; --accent-soft: #1f3322; --code-bg: #20261e;
+    --warn: #f0b45a; --warn-soft: #3a2b12; --low: #a9b8e6; --low-soft: #232a3d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121511; --surface: #1a1e19; --fg: #e5e9e1; --muted: #9aa494;
+  --rule: #2c3229; --accent: #7cc489; --accent-soft: #1f3322; --code-bg: #20261e;
+  --warn: #f0b45a; --warn-soft: #3a2b12; --low: #a9b8e6; --low-soft: #232a3d;
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  background: var(--bg); color: var(--fg);
+  font-family: var(--body); font-size: 15.5px; line-height: 1.6;
+}
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-block: 48px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 40px;
+}
+code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+header { display: flex; flex-direction: column; gap: 14px; }
+.path { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+h1 { font-family: var(--display); font-size: clamp(30px, 6vw, 42px); line-height: 1.1; margin: 0; text-wrap: balance; font-weight: 700; }
+h2 { font-family: var(--display); font-size: 22px; margin: 0; font-weight: 600; text-wrap: balance; }
+.section { display: flex; flex-direction: column; gap: 14px; }
+.section > p { margin: 0; max-width: 65ch; }
+
+.verdict {
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+  padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;
+}
+.verdict .grade { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.verdict .grade strong { font-family: var(--display); font-size: 26px; color: var(--accent); }
+.verdict .grade span { color: var(--muted); font-size: 14px; }
+.verdict p { margin: 0; max-width: 65ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.facts li { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+
+.strengths { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; max-width: 68ch; }
+
+.gaps { display: flex; flex-direction: column; border-top: 1px solid var(--rule); }
+.gap { padding: 20px 0; border-bottom: 1px solid var(--rule); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gap-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.gap h3 { margin: 0; font-size: 16.5px; font-weight: 600; }
+.chip { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
+.chip.med { background: var(--warn-soft); color: var(--warn); }
+.chip.low { background: var(--low-soft); color: var(--low); }
+.chip.style { background: var(--code-bg); color: var(--muted); }
+.gap p { margin: 0; max-width: 68ch; }
+.gap .label { font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+pre {
+  margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+  background: var(--code-bg); border-radius: 6px; padding: 10px 14px; overflow-x: auto;
+}
+
+.prompt { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.prompt-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--rule); }
+.prompt-bar span { font-size: 13px; color: var(--muted); }
+.prompt-bar button {
+  font: 500 13px var(--body); color: var(--accent); background: var(--accent-soft);
+  border: 0; border-radius: 6px; padding: 5px 12px; cursor: pointer;
+}
+.prompt-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.prompt pre { border-radius: 0; background: transparent; white-space: pre-wrap; font-size: 13px; padding: 14px; }
+
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="path">src/lib/schedule.test.ts</span>
+    <h1>Schedule tests review</h1>
+  </header>
+
+  <div class="verdict">
+    <div class="grade"><strong>Strong</strong><span>One medium gap, a few small ones</span></div>
+    <p>This is a careful suite. It checks behavior users rely on, uses fixed dates, and goes after the date bugs that usually slip through: Sunday placement, month and year rollovers, leap days and daylight saving. Its main gap is that it never says what should happen when an event's end is before its start.</p>
+    <ul class="facts">
+      <li>77 / 77 passing</li>
+      <li>Passed in UTC, Chicago, Auckland, Santiago</li>
+      <li>Every exported function tested</li>
+    </ul>
+  </div>
+
+  <section class="section">
+    <h2>What it does well</h2>
+    <ul class="strengths">
+      <li><strong>No dependence on today's date.</strong> Every test uses fixed dates in 2026 or 2024, and nothing calls <code>Date.now()</code>, so the suite won't break as time passes.</li>
+      <li><strong>Expected values come from a separate path.</strong> The <code>at()</code> helper builds dates with <code>new Date(y, m, d, h, min)</code>, while the code parses strings and uses <code>setDate</code>. A shared bug would have to exist in both.</li>
+      <li><strong>A sweep over four years.</strong> <code>mondayOf</code> is checked on 1,464 consecutive days, which covers every daylight saving change in that range in whatever time zone CI uses.</li>
+      <li><strong>Round trips.</strong> Values are saved with <code>buildWhen</code> and read back through the edit-form helpers and <code>formatWhen</code>, which is the path the app takes.</li>
+      <li><strong>Messy real-world input.</strong> Leftover fields from the other schedule mode, old records with no <code>repeatDays</code>, and unknown day numbers are all covered.</li>
+      <li><strong>Readable.</strong> <code>it.each</code> tables and test names like “Sunday belongs to the week that started six days earlier” work as a spec for the code.</li>
+      <li><strong>CI backs up the time zone claim.</strong> The workflow runs the suite in three time zones. I also ran it in America/Santiago, where clocks change at midnight, and it passed.</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>Gaps, most important first</h2>
+    <p>I confirmed each of these by running the code in a temporary test, which I deleted afterward.</p>
+    <div class="gaps">
+
+      <div class="gap">
+        <div class="gap-head"><span class="chip med">Medium</span><h3>End before start is never tested</h3></div>
+        <p>Nothing checks that the end comes after the start. A one-time event from 8:00 PM to 6:00 PM is saved as typed. A weekly event from 10:00 PM to 1:00 AM is saved with the end on the same day as the start, three hours earlier, but it still displays as “10:00 PM to 1:00 AM”. The forms accept both because the inputs are separate fields. Anything that later sorts by end time or checks whether an event is over will get these wrong.</p>
+        <span class="label">Suggested test</span>
+        <pre>it('rolls an overnight weekly end into the next day', () =&gt; {
+  const r = buildWhen('weekly', '', '', WEEK, '22:00', '01:00', [MON])
+  expect(r.endsAt).toBe(at(2026, 11, 10, 1, 0))
+})
+
+it('rejects a one-time end before its start', () =&gt; {
+  expect(() =&gt; buildWhen('once', '2026-11-09T20:00', '2026-11-09T18:00', '', '', '', []))
+    .toThrow()
+})</pre>
+        <p>Both tests fail today. Decide what the right behavior is, then change the code to match.</p>
+      </div>
+
+      <div class="gap">
+        <div class="gap-head"><span class="chip low">Low</span><h3>Daylight saving checks for <code>dateInWeek</code> only cover US dates</h3></div>
+        <p>The two daylight saving tests use the US change dates. In the UTC and Auckland CI runs, nothing changes on those dates, so the tests pass without testing anything. The four-year sweep only covers <code>mondayOf</code>. Running a similar loop over <code>dateInWeek</code> (every week, every weekday, checking the date and wall-clock time) would make each time zone in CI check its own daylight saving changes.</p>
+      </div>
+
+      <div class="gap">
+        <div class="gap-head"><span class="chip low">Low</span><h3>The “order given” test can't detect a shared array</h3></div>
+        <p><code>buildWhen</code> returns the caller's <code>days</code> array as <code>repeatDays</code>, so both names point to the same array. The test checks that <code>days</code> wasn't changed, but <code>buildWhen</code> never changes it, so that check can't fail. If the form changes its own days array after saving, the saved object changes with it. Add <code>expect(result.repeatDays).not.toBe(days)</code> and copy the array in <code>buildWhen</code>, or drop the check that tests nothing.</p>
+      </div>
+
+      <div class="gap">
+        <div class="gap-head"><span class="chip low">Low</span><h3>Invalid input has no defined behavior</h3></div>
+        <p>A malformed week saves <code>NaN</code> for both <code>weekOf</code> and <code>startsAt</code> without any error. A time of <code>25:00</code> moves the event to 1:00 AM the next day. An unknown day number such as <code>9</code> moves the start into the following week. The native date and time inputs make these unlikely from the UI, which is why they're low priority. One test that rejects a bad week would still stop <code>NaN</code> from reaching Firestore.</p>
+      </div>
+
+      <div class="gap">
+        <div class="gap-head"><span class="chip style">Style</span><h3>Some checks depend on another function under test</h3></div>
+        <p>The <code>ymd()</code> helper calls <code>toDateInput</code>, which is also being tested. If <code>toDateInput</code> broke, the <code>mondayOf</code> and <code>dateInWeek</code> tests would fail too and point you to the wrong place. It's a small cost, since <code>toDateInput</code> has its own tests. Comparing <code>getFullYear()</code>, <code>getMonth()</code> and <code>getDate()</code> directly would remove the link.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Prompt used for this review</h2>
+    <p>Paste this into Claude Code from the repo root to rerun the review, or swap in a different file path.</p>
+    <div class="prompt">
+      <div class="prompt-bar"><span>Example prompt</span><button type="button" id="copy-prompt">Copy</button></div>
+      <pre id="prompt-text">Review the quality of src/lib/schedule.test.ts. Read it together with src/lib/schedule.ts, the places in the app that call those functions, and the CI workflow.
+
+Judge the tests on:
+- whether they check behavior users actually depend on
+- whether the expected values are worked out independently of the code being tested
+- edge cases: time zones, daylight saving, month and year rollovers, leap days, bad input
+- whether they are deterministic and won't break as time passes
+- whether they would actually fail if the code had a realistic bug
+
+Run the suite, including under a few different TZ values. Wherever the tests leave behavior unspecified, run the code to see what it really does, and don't leave any probe files behind.
+
+Report the strengths first, then the gaps ranked by how likely each is to hide a real bug. Give each gap a concrete test to add. End with an overall verdict.</pre>
+    </div>
+  </section>
+
+  <footer>AI-generated review (Claude Code) of <code>src/lib/schedule.test.ts</code> on branch <code>add-tests-ci</code>, Nov 11, 2026. A companion page describes what each test group checks.</footer>
+</div>
+
+<script>
+  document.getElementById('copy-prompt').addEventListener('click', function () {
+    var btn = this;
+    var text = document.getElementById('prompt-text').textContent;
+    function selectIt() {
+      var range = document.createRange();
+      range.selectNodeContents(document.getElementById('prompt-text'));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      btn.textContent = 'Selected, press Ctrl+C';
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1800);
+      }, selectIt);
+    } catch (e) { selectIt(); }
+  });
+</script>
+</body>
+</html>

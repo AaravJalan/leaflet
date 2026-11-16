@@ -9,7 +9,7 @@ import { loadAnnouncements, loadOrganizations } from '../services/catalog'
 import type { Announcement } from '../types'
 
 function readScope(value: string | null, fallback: Scope): Scope {
-  if (value === 'following' || value === 'mine' || value === 'all') return value
+  if (value === 'following' || value === 'all') return value
   return fallback
 }
 
@@ -39,7 +39,6 @@ export function BrowseAnnouncements() {
         if (scope === 'following') {
           return followed.has(post.orgId) && !mine.has(post.orgId) && post.createdBy !== user?.uid
         }
-        if (scope === 'mine') return mine.has(post.orgId)
         return true
       })
       if (!cancelled) {
@@ -58,13 +57,14 @@ export function BrowseAnnouncements() {
       <section className="section">
         <div className="section__head">
           <div>
-            <h1>Feed</h1>
+            <h1>Newest events</h1>
             <p className="lede lede--tight">
-              {user ? 'Filter by everything, followed orgs, or created orgs.' : 'Public announcements.'}
+              {user ? 'Everything, or just the orgs you follow.' : 'Public announcements.'}
             </p>
           </div>
           {user ? (
             <ScopeToggle
+              only={['all', 'following']}
               value={scope}
               onChange={(next) => setParams({ scope: next })}
             />
@@ -77,7 +77,7 @@ export function BrowseAnnouncements() {
         ) : null}
         {loading ? <p className="muted">Loading…</p> : null}
         {!loading && items.length === 0 ? <p className="empty">Nothing in this view.</p> : null}
-        <div className="stack">
+        <div className="feed-grid">
           {items.map((item) => (
             <AnnouncementCard key={item.id} announcement={item} />
           ))}

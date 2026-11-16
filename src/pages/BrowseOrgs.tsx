@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { canOrganize } from '../lib/roles'
 import { OrgCard } from '../components/OrgCard'
 import { ScopeToggle, type Scope } from '../components/ScopeToggle'
 import { SetupBanner } from '../components/SetupBanner'
@@ -70,6 +71,11 @@ export function BrowseOrgs() {
             <p className="lede lede--tight">
               {user ? 'All public orgs, followed orgs, or created orgs.' : 'Public orgs.'}
             </p>
+            {canOrganize(profile?.accountType) ? (
+              <Link className="quiet-link" to="/orgs/new">
+                + Start a new org
+              </Link>
+            ) : null}
           </div>
           {user ? (
             <ScopeToggle

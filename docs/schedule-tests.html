@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leaflet Schedule Tests</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&display=swap">
+<style>
+/* Layout: one reading column; each function group is a row with a count gutter on the left, like a test runner's output. */
+:root {
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --fg: #1d221c;
+  --muted: #5d665a;
+  --rule: #dfe3da;
+  --accent: #2f7a3e;
+  --accent-soft: #e4f0e3;
+  --code-bg: #eef1ea;
+  --display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121511; --surface: #1a1e19; --fg: #e5e9e1; --muted: #9aa494;
+    --rule: #2c3229; --accent: #7cc489; --accent-soft: #1f3322; --code-bg: #20261e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121511; --surface: #1a1e19; --fg: #e5e9e1; --muted: #9aa494;
+  --rule: #2c3229; --accent: #7cc489; --accent-soft: #1f3322; --code-bg: #20261e;
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  background: var(--bg); color: var(--fg);
+  font-family: var(--body); font-size: 15.5px; line-height: 1.6;
+}
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-block: 48px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 40px;
+}
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+header { display: flex; flex-direction: column; gap: 14px; }
+.path { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: 0.01em; }
+h1 { font-family: var(--display); font-size: clamp(30px, 6vw, 42px); line-height: 1.1; margin: 0; text-wrap: balance; font-weight: 700; }
+.lede { margin: 0; max-width: 62ch; color: var(--fg); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; padding: 0; list-style: none; }
+.facts li {
+  font-size: 13px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--surface); color: var(--muted);
+}
+.facts li strong { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.facts li.pass { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.facts li.pass strong { color: var(--accent); }
+
+h2 { font-family: var(--display); font-size: 22px; margin: 0; font-weight: 600; text-wrap: balance; }
+.section { display: flex; flex-direction: column; gap: 14px; }
+.section > p { margin: 0; max-width: 65ch; }
+
+.used { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.used div { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.used .where { font-family: var(--mono); font-size: 12.5px; color: var(--muted); display: block; overflow-wrap: anywhere; }
+.used .what { font-size: 14px; }
+
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; max-width: 420px; }
+.week span {
+  text-align: center; font-size: 12px; padding: 6px 0; border-radius: 6px;
+  background: var(--surface); border: 1px solid var(--rule); font-variant-numeric: tabular-nums;
+}
+.week span b { display: block; font-family: var(--mono); font-weight: 500; font-size: 13px; }
+.week span.mon { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.caption { font-size: 13px; color: var(--muted); margin: 0; }
+
+.groups { display: flex; flex-direction: column; border-top: 1px solid var(--rule); }
+.group { display: grid; grid-template-columns: 52px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--rule); }
+.count { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.2; text-align: right; }
+.count small { display: block; font-size: 10.5px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+.group-body { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.group h3 { margin: 0; font-family: var(--mono); font-size: 15px; font-weight: 500; }
+.group h3 .mode { font-family: var(--body); color: var(--muted); font-weight: 400; font-size: 14px; }
+.group .does { margin: 0; color: var(--muted); font-size: 14.5px; }
+.group ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.group li { padding-left: 2px; }
+.ex {
+  font-family: var(--mono); font-size: 12.5px; background: var(--code-bg);
+  border-radius: 6px; padding: 8px 12px; overflow-x: auto; white-space: pre; line-height: 1.55;
+}
+.ex .arrow { color: var(--accent); }
+
+.themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.themes div { border-left: 2px solid var(--accent); padding: 2px 0 2px 14px; min-width: 0; }
+.themes h4 { margin: 0 0 4px; font-size: 14.5px; font-weight: 600; }
+.themes p { margin: 0; font-size: 14px; color: var(--muted); }
+
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; }
+
+@media (max-width: 480px) {
+  .group { grid-template-columns: 1fr; gap: 6px; }
+  .count { text-align: left; display: flex; align-items: baseline; gap: 8px; }
+  .count small { display: inline; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="path">src/lib/schedule.test.ts</span>
+    <h1>What the schedule tests check</h1>
+    <p class="lede">This file tests <code>src/lib/schedule.ts</code>, the code that turns the date and time fields on the announcement form into stored timestamps and turns those timestamps back into text like “Week of Nov 9, Mon, Fri, 6:00 PM to 7:30 PM”.</p>
+    <ul class="facts">
+      <li class="pass"><strong>77</strong> tests passing</li>
+      <li><strong>10</strong> test groups</li>
+      <li><strong>8</strong> functions covered</li>
+      <li>CI runs it in <strong>3</strong> time zones</li>
+    </ul>
+  </header>
+
+  <section class="section">
+    <h2>Why it matters</h2>
+    <p>Every announcement with a time goes through these functions, both when it is saved and when it is shown.</p>
+    <div class="used">
+      <div><span class="where">CreateAnnouncement.tsx</span><span class="what"><code>buildWhen</code> saves a new event time</span></div>
+      <div><span class="where">EditAnnouncement.tsx</span><span class="what"><code>buildWhen</code> plus the <code>to…Input</code> helpers to refill the form</span></div>
+      <div><span class="where">AnnouncementCard.tsx, AnnouncementDetail.tsx</span><span class="what"><code>formatWhen</code> shows the time to readers</span></div>
+      <div><span class="where">ScheduleFields.tsx</span><span class="what"><code>WEEKDAYS</code> draws the day picker</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>The fixed test week</h2>
+    <p>Most tests use the same week, Monday Nov 9 to Sunday Nov 15, 2026. Weeks start on Monday, so Sunday is the last day of the week, not the first. Many tests exist to pin down that one rule.</p>
+    <div class="week" aria-label="Test week, Nov 9 to Nov 15 2026">
+      <span class="mon">Mon<b>9</b></span><span>Tue<b>10</b></span><span>Wed<b>11</b></span><span>Thu<b>12</b></span><span>Fri<b>13</b></span><span>Sat<b>14</b></span><span>Sun<b>15</b></span>
+    </div>
+    <p class="caption">JavaScript numbers Sunday as 0, but the app puts it last.</p>
+  </section>
+
+  <section class="section">
+    <h2>Test groups</h2>
+    <div class="groups">
+
+      <div class="group">
+        <div class="count">1<small>test</small></div>
+        <div class="group-body">
+          <h3>WEEKDAYS</h3>
+          <p class="does">The list of days used by the day picker.</p>
+          <ul><li>The list goes Mon through Sun, and each day has the correct JavaScript day number.</li></ul>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="count">13<small>tests</small></div>
+        <div class="group-body">
+          <h3>mondayOf</h3>
+          <p class="does">Finds the Monday of the week that contains a given date.</p>
+          <ul>
+            <li>Every day from Mon to Sun maps back to Nov 9. Sunday goes back six days, not forward one.</li>
+            <li>Works across a month change, a year change and a leap day.</li>
+            <li>Returns local midnight.</li>
+            <li>A loop over every day from 2024 to 2027 checks that the result is always a Monday, 0 to 6 days earlier, and unchanged if you run it again. This covers every daylight saving change in those years.</li>
+          </ul>
+          <div class="ex">mondayOf('2026-01-01') <span class="arrow">→</span> 2025-12-29
+mondayOf('2024-02-29') <span class="arrow">→</span> 2024-02-26</div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="count">17<small>tests</small></div>
+        <div class="group-body">
+          <h3>dateInWeek</h3>
+          <p class="does">Takes a week, a weekday and a time like “18:30” and returns that exact moment.</p>
+          <ul>
+            <li>Each weekday lands on the right date, and Sunday comes after Saturday.</li>
+            <li>Any date inside the week gives the same answer.</li>
+            <li>Sets hours and minutes and clears seconds, including 00:00 and 23:59.</li>
+            <li>Rolls into the next month, the next year, and over Feb 29.</li>
+            <li>Keeps 10:15 as 10:15 on the Sundays when US clocks spring forward or fall back.</li>
+            <li>A blank or garbled time falls back to midnight, and “7” means 7:00.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="count">11<small>tests</small></div>
+        <div class="group-body">
+          <h3>toDateInput · toTimeInput · toDateTimeInput</h3>
+          <p class="does">Turn a stored timestamp back into the text format HTML date and time inputs expect, so the edit form can be refilled.</p>
+          <ul>
+            <li>Formats use leading zeros (<code>2026-01-05</code>, <code>09:05</code>, <code>2026-01-05T09:05</code>).</li>
+            <li>Midnight and 23:59 stay on the correct local day.</li>
+            <li><code>null</code> and <code>0</code> both count as empty and return <code>''</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="count">5<small>tests</small></div>
+        <div class="group-body">
+          <h3>buildWhen <span class="mode">one-time events</span></h3>
+          <p class="does">Turns the form's start and end fields into what gets saved.</p>
+          <ul>
+            <li>Turns both datetime fields into timestamps. Start and end can each be left blank.</li>
+            <li>Ignores weekly fields still filled in after the user switches back to “once”.</li>
+            <li>Saving and then loading the edit form gives back the exact text that was typed.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="count">13<small>tests</small></div>
+        <div class="group-body">
+          <h3>buildWhen <span class="mode">weekly events</span></h3>
+          <p class="does">Turns the week, days and times into what gets saved.</p>
+          <ul>
+            <li>Throws “Pick a week, at least one day, and a start time.” if the week, start time or days are missing.</li>
+            <li>Saves the Monday of the chosen week, even if the user picked a Thursday.</li>
+            <li>Uses the earliest selected day, Mon to Sun, as the start date, no matter what order the days were clicked in. If only Sunday is picked, it starts on the 15th, not the 9th.</li>
+            <li>Keeps the selected days in the order given and does not change the input array.</li>
+            <li>Ignores one-time fields left over from before.</li>
+            <li>Loading the edit form or formatting the saved event gives back what the user picked.</li>
+          </ul>
+          <div class="ex">days [FRI, TUE, THU] at 09:00 <span class="arrow">→</span> startsAt Tue Nov 10, 9:00 AM</div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="count">7<small>tests</small></div>
+        <div class="group-body">
+          <h3>formatWhen <span class="mode">one-time events</span></h3>
+          <p class="does">The text shown on announcement cards and the detail page.</p>
+          <ul>
+            <li>Shows the start alone, or a full start-to-end range.</li>
+            <li>Ranges that end the next day or the next month show the correct end date.</li>
+            <li>Midnight shows as 12:00 AM and noon as 12:00 PM.</li>
+            <li>Shows nothing if there is no start, even when there is an end.</li>
+          </ul>
+          <div class="ex">Sat, Oct 31, 10:00 PM to Sun, Nov 1, 1:00 AM</div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="count">10<small>tests</small></div>
+        <div class="group-body">
+          <h3>formatWhen <span class="mode">weekly events</span></h3>
+          <p class="does">The same text for repeating events.</p>
+          <ul>
+            <li>Shows the week, the days and the time range, and leaves out the end when there isn't one.</li>
+            <li>Sorts days Mon to Sun without changing the saved array.</li>
+            <li>Shows “Weekly” if no week is set. Leaves out the time if there is no start.</li>
+            <li>Skips unknown day numbers.</li>
+            <li>Uses the one-time format when there are no repeat days, including older saved records that have no <code>repeatDays</code> field.</li>
+          </ul>
+          <div class="ex">Week of Nov 9, Mon, Wed, Fri, Sun, 6:00 PM</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>What the suite guards against</h2>
+    <div class="themes">
+      <div><h4>Time zone and DST drift</h4><p>Everything runs in local time. CI runs the suite in UTC, America/Chicago and Pacific/Auckland so off-by-one-day bugs show up.</p></div>
+      <div><h4>Sunday placement</h4><p>Sunday is 0 in JavaScript but the last day of the week in the app. The tests check this in every function that deals with weekdays.</p></div>
+      <div><h4>Round trips</h4><p>Saving an event and opening the edit form must give back the same values the user typed.</p></div>
+      <div><h4>Messy input</h4><p>Leftover fields from the other schedule mode, blank or garbled times, and old records missing fields.</p></div>
+    </div>
+  </section>
+
+  <footer>Summary of <span class="mono">src/lib/schedule.test.ts</span> on branch <span class="mono">add-tests-ci</span>. All 77 tests passed in a local run on Nov 11, 2026.</footer>
+</div>
+</body>
+</html>
