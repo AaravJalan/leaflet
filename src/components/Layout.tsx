@@ -2,7 +2,6 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
-import { canOrganize } from '../lib/roles'
 import { listSubscriptions } from '../services/subscriptions'
 
 export function Layout() {
@@ -26,6 +25,7 @@ export function Layout() {
     <div className="shell">
       <header className="topbar">
         <Link to="/" className="brand">
+          <img className="brand__logo" src="/logo.png" alt="" />
           Leaflet
         </Link>
         <nav className="nav">
@@ -33,7 +33,9 @@ export function Layout() {
             Feed
           </NavLink>
           <NavLink to="/orgs">Orgs</NavLink>
-          <NavLink to="/account">Account</NavLink>
+        </nav>
+        <nav className="nav nav--end">
+          <NavLink to="/account">Home</NavLink>
         </nav>
         <div className="topbar__actions">
           {!configured ? <span className="setup-chip">Missing .env</span> : null}
@@ -42,11 +44,6 @@ export function Layout() {
               <Link className="user-chip" to="/settings">
                 {profile?.accountType ? profile.displayName || user.email : 'Set account type'}
               </Link>
-              {canOrganize(profile?.accountType) ? (
-                <Link className="btn" to="/orgs/new">
-                  New org
-                </Link>
-              ) : null}
               <button type="button" className="btn btn--ghost" onClick={() => void logOut()}>
                 Log out
               </button>

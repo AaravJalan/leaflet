@@ -34,6 +34,17 @@ type AuthContextValue = {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+/** Local dev without a .env: sign in as a fake organizer so creation flows can be tested. */
+const DEV_LOGIN = import.meta.env.DEV && !isFirebaseConfigured
+const DEV_USER = { uid: 'dev-user', email: 'dev@example.com', displayName: 'Dev User' } as User
+const DEV_PROFILE: UserProfile = {
+  uid: DEV_USER.uid,
+  email: 'dev@example.com',
+  displayName: 'Dev User',
+  createdAt: 0,
+  accountType: 'both',
+}
 const googleProvider = new GoogleAuthProvider()
 
 async function syncProfile(user: User) {
@@ -48,8 +59,8 @@ async function syncProfile(user: User) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [user, setUser] = useState<User | null>(DEV_LOGIN ? DEV_USER : null)
+  const [profile, setProfile] = useState<UserProfile | null>(DEV_LOGIN ? DEV_PROFILE : null)
   const [loading, setLoading] = useState(isFirebaseConfigured)
 
   useEffect(() => {
@@ -75,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const chooseAccountType = useCallback(
     async (type: AccountType) => {
       if (!user) throw new Error('Sign in first.')
-      await saveAccountType(user.uid, type)
+      if (!DEV_LOGIN) await saveAccountType(user.uid, type)
       setProfile((current) =>
         current
           ? { ...current, accountType: type }
@@ -104,6 +115,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(await syncProfile(cred.user))
       },
       async signIn(email, password) {
+        if (DEV_LOGIN) {
+          setUser(DEV_USER)
+          setProfile(DEV_PROFILE)
+          return
+        }
         if (!auth) throw new Error('Firebase is not configured.')
         await signInWithEmailAndPassword(auth, email, password)
       },
@@ -113,6 +129,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(await syncProfile(cred.user))
       },
       async logOut() {
+        if (DEV_LOGIN) {
+          setUser(null)
+          setProfile(null)
+          return
+        }
         if (!auth) throw new Error('Firebase is not configured.')
         await signOut(auth)
       },

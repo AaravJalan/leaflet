@@ -9,13 +9,22 @@ const OPTIONS: { id: Scope; label: string }[] = [
 export function ScopeToggle({
   value,
   onChange,
+  only,
 }: {
   value: Scope
   onChange: (value: Scope) => void
+  /** Limit which filters show; defaults to all three. */
+  only?: Scope[]
 }) {
+  const options = only ? OPTIONS.filter((option) => only.includes(option.id)) : OPTIONS
   return (
-    <div className="segmented segmented--three" role="tablist" aria-label="Filter">
-      {OPTIONS.map((option) => (
+    <div
+      className="segmented segmented--three"
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+      role="tablist"
+      aria-label="Filter"
+    >
+      {options.map((option) => (
         <button
           key={option.id}
           type="button"

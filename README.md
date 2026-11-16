@@ -34,7 +34,7 @@ Local `npm run dev` is ahead of the live site until the next deploy.
 
 ## How it works
 
-Nav: Feed, Orgs, Account.
+Nav: Feed and Orgs on the left, Home on the right.
 
 Feed and Orgs have three filters: All, Following, My orgs. Following does not include orgs you created or posts you wrote.
 
