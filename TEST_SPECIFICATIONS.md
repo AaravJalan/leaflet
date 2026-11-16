@@ -15,13 +15,13 @@ This document describes every automated unit test in the Leaflet codebase in pla
 | `src/context/DemoContext.test.tsx` | 15 |
 | `src/components/ScheduleFields.test.tsx` | 8 |
 | `src/lib/orgAccess.test.ts` | 9 |
-| `src/lib/helpers.test.ts` | 30 |
+| `src/lib/helpers.test.ts` | 27 |
 | `src/lib/edits.test.ts` | 10 |
-| `src/lib/schedule.test.ts` | 76 |
-| `src/services/catalog.test.ts` | 20 |
-| `src/services/firestore.test.ts` | 20 |
-| `src/services/announcements.test.ts` | 12 |
-| **Total** | **200** |
+| `src/lib/schedule.test.ts` | 77 |
+| `src/services/catalog.test.ts` | 22 |
+| `src/services/firestore.test.ts` | 23 |
+| `src/services/announcements.test.ts` | 11 |
+| **Total** | **202** |
 
 ---
 
@@ -328,8 +328,6 @@ The catalog combines three sources of orgs and announcements: **remote** data fr
 | loadAnnouncement | finds a shared sample post without calling Firestore | No setup. | `loadAnnouncement('mock-post', ...)` is called. | Returns the sample post, and Firestore is not contacted. |
 | loadAnnouncement | falls back to Firestore and applies edits | Remote post "r" with a saved title edit "Edited". | `loadAnnouncement('r', ...)` is called. | The returned title is "Edited". |
 | loadAnnouncement | returns null for hidden, missing, or failed lookups | (1) Remote post "r" exists but is hidden. (2) The post is not found. (3) The lookup fails. | `loadAnnouncement` is called in each case. | Returns `null` every time. |
-
-> Note: the `loadAnnouncement` suite has 4 tests, so the catalog file has 22 rows. The summary table at the top counts **tests per file**, and this file has 22.
 
 ---
 
