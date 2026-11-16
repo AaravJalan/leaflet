@@ -29,7 +29,7 @@ export function OrgMarks({
         </span>
       ) : null}
       {showFollow ? (
-        <span className="mark mark--icon mark--follow" title="You follow this org" aria-label="You follow this org">
+        <span className="mark mark--icon mark--follow" title="You subscribe to this org" aria-label="You subscribe to this org">
           <MarkIcon kind="follow" />
         </span>
       ) : null}

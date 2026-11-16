@@ -2,7 +2,7 @@ export type Scope = 'all' | 'following' | 'mine'
 
 const OPTIONS: { id: Scope; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'following', label: 'Following' },
+  { id: 'following', label: 'Subscribed' },
   { id: 'mine', label: 'My orgs' },
 ]
 

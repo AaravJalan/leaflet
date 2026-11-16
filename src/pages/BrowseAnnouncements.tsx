@@ -59,7 +59,7 @@ export function BrowseAnnouncements() {
           <div>
             <h1>Newest events</h1>
             <p className="lede lede--tight">
-              {user ? 'Everything, or just the orgs you follow.' : 'Public announcements.'}
+              {user ? 'Everything, or just the orgs you subscribe to.' : 'Public announcements.'}
             </p>
           </div>
           {user ? (
@@ -72,7 +72,7 @@ export function BrowseAnnouncements() {
         </div>
         {showFollowHint ? (
           <p className="muted">
-            <Link to="/orgs">Follow orgs</Link> to personalize your feed.
+            <Link to="/orgs">Subscribe to orgs</Link> to personalize your feed.
           </p>
         ) : null}
         {loading ? <p className="muted">Loading…</p> : null}

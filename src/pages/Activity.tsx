@@ -163,7 +163,7 @@ export function Activity() {
             </button>
           ))}
 
-          {followedOrgs.length > 0 ? <p className="workspace__group">Following</p> : null}
+          {followedOrgs.length > 0 ? <p className="workspace__group">Subscribed</p> : null}
           {followedOrgs.map((org) => (
             <button
               key={org.id}

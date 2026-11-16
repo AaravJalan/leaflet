@@ -36,7 +36,7 @@ Local `npm run dev` is ahead of the live site until the next deploy.
 
 Nav: Feed and Orgs on the left, Home on the right.
 
-Feed and Orgs have three filters: All, Following, My orgs. Following does not include orgs you created or posts you wrote.
+Feed and Orgs have three filters: All, Subscribed, My orgs. Subscribed does not include orgs you created or posts you wrote.
 
 Settings has one account type:
 
@@ -50,7 +50,7 @@ Marks are icons only:
 
 - House: you created the org
 - Pencil: you can post, but you did not create it
-- Bookmark: you follow it
+- Bookmark: you subscribe to it
 - Star: created in the last day
 
 Signed in, announcement cards show the poster's name. Signed out, names and "you" are hidden.
@@ -66,8 +66,8 @@ A few shared sample orgs and posts always show for everyone. They are owned by d
 | Path | Page |
 | --- | --- |
 | `/` | Feed |
-| `/announcements` | All / Following / My orgs |
-| `/orgs` | All / Following / My orgs |
+| `/announcements` | All / Subscribed / My orgs |
+| `/orgs` | All / Subscribed / My orgs |
 | `/activity` | Access changes, orgs you can post to, your posts |
 | `/auth` | Sign in / sign up (email or Google) |
 | `/settings` | Account type |
@@ -78,7 +78,7 @@ A few shared sample orgs and posts always show for everyone. They are owned by d
 | `/a/:announcementId` | Announcement |
 | `/a/:announcementId/edit` | Edit announcement |
 
-`/browse` goes to `/orgs`. `/me` goes to My orgs. `/inbox` goes to Following announcements.
+`/browse` goes to `/orgs`. `/me` goes to My orgs. `/inbox` goes to Subscribed announcements.
 
 ## Firestore
 
@@ -95,7 +95,7 @@ A signed-in user can create an org when `ownerId` is their uid. There is no veri
 
 ## Not built
 
-- Email when something is posted. "Inbox" in the homepage line is the Following filter, not mail.
+- Email when something is posted. "Inbox" in the homepage line is the Subscribed filter, not mail.
 - RSVP
 - Push notifications
 - A map

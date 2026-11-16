@@ -69,7 +69,7 @@ export function BrowseOrgs() {
           <div>
             <h1>Organizations</h1>
             <p className="lede lede--tight">
-              {user ? 'All public orgs, followed orgs, or created orgs.' : 'Public orgs.'}
+              {user ? 'All public orgs, subscribed orgs, or created orgs.' : 'Public orgs.'}
             </p>
             {canOrganize(profile?.accountType) ? (
               <Link className="quiet-link" to="/orgs/new">
