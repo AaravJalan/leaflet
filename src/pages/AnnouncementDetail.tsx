@@ -89,6 +89,7 @@ export function AnnouncementDetail() {
 
   async function toggleRsvp() {
     if (!item || !user || rsvpBusy) return
+    if (going && !window.confirm('Are you sure you want to cancel your RSVP?')) return
     setError('')
     if (localOnly) {
       demo.setGoing(item.id, !going)
