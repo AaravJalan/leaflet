@@ -1,13 +1,15 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { FeedbackBanner } from './FeedbackBanner'
+import { Landing } from '../pages/Landing'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
 import { listSubscriptions } from '../services/subscriptions'
 
 export function Layout() {
-  const { user, profile, logOut, configured } = useAuth()
+  const { user, profile, logOut, configured, loading } = useAuth()
   const demo = useDemo()
+  const { pathname } = useLocation()
 
   useEffect(() => {
     if (!user) return
@@ -22,6 +24,9 @@ export function Layout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
+  // Signed-out visitors land on the marketing page; the feed lives at /feed.
+  if (pathname === '/' && !user) return loading ? null : <Landing />
+
   return (
     <div className="shell">
       <FeedbackBanner />
@@ -31,7 +36,7 @@ export function Layout() {
           Leaflet
         </Link>
         <nav className="nav">
-          <NavLink to="/" end>
+          <NavLink to={user ? '/' : '/feed'} end>
             Feed
           </NavLink>
           <NavLink to="/orgs">Orgs</NavLink>

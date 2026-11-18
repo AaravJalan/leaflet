@@ -22,6 +22,7 @@ export default function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<BrowseAnnouncements />} />
+            <Route path="feed" element={<BrowseAnnouncements />} />
             <Route path="announcements" element={<Navigate to="/" replace />} />
             <Route path="orgs" element={<BrowseOrgs />} />
             <Route path="account" element={<Activity />} />
