@@ -388,3 +388,39 @@ This service reads and writes announcements (posts) in the Firestore database.
 | listing | skips the query with no orgs | No setup. | `listAnnouncementsForOrgs([])` is called. | Returns an empty list without contacting the database. |
 | writing | trims text and copies org details on create | The database returns new id "new", the clock reads 1234, and the org is "Org" (Campus). | `createAnnouncement` is called with the padded sample input, the org, and the author "u"/"User". | Returns id "new". The saved record has trimmed text, the org's id, name, and type, the author, created time 1234, the weekly schedule fields, and an empty image. |
 | writing | trims text and clears a removed image on update | No setup. | `updateAnnouncement('a', input)` is called with the padded sample input. | The saved update has trimmed text, the schedule fields, and `imageUrl: ''` (the image is cleared). |
+
+---
+
+## Firestore security rules — `firestore.rules`
+
+Test file: `tests/rules/firestore.rules.test.ts`
+
+These tests are not in the unit test count above. They run against the Firestore emulator (which needs Java 21 or later) with `npm run test:rules`, not with `npm test`. CI runs them in the "Firestore rules" job, and a deploy waits for them to pass.
+
+**Shared Given:** Before every test the emulator database is cleared and seeded with the rules turned off: users `owner`, `editor`, and `stranger`, all organizers; org `org1` owned by `owner`; `editor` added to `org1` as a poster; and two posts in `org1`, `ownerPost` by `owner` and `editorPost` by `editor`. `stranger` is signed in but has no link to `org1`. "Signed out" means a request with no signed-in user.
+
+| Test Suite / Describe | Test Name | Given (Initial State) | When (Action / Event) | Then (Expected Outcome) |
+| --- | --- | --- | --- | --- |
+| creating announcements | lets the owner post | Shared seed. | `owner` creates a post in `org1` as its author. | Allowed. |
+| creating announcements | lets an added editor post | Shared seed. | `editor` creates a post in `org1` as its author. | Allowed. |
+| creating announcements | stops a signed-in user who is not an editor | Shared seed. | `stranger` creates a post in `org1` as its author. | Denied. |
+| creating announcements | stops a non-editor posting under the owner’s name | Shared seed. | `stranger` creates a post in `org1` with `owner` as its author. | Denied. |
+| creating announcements | stops a signed-out user | Shared seed. | A signed-out user creates a post in `org1`. | Denied. |
+| creating announcements | stops an editor whose access was removed | `editor`'s member record is deleted. | `editor` creates a post in `org1`. | Denied. |
+| changing announcements | lets the author edit and delete their post | Shared seed. | `editor` changes the title of `editorPost`, then deletes it. | Both allowed. |
+| changing announcements | stops a non-editor editing a post | Shared seed. | `stranger` changes the title of `ownerPost`. | Denied. |
+| changing announcements | stops a non-editor taking over a post by setting themselves as author | Shared seed. | `stranger` sets `ownerPost`'s author to `stranger`. | Denied. |
+| changing announcements | stops a non-editor deleting a post | Shared seed. | `stranger` deletes `ownerPost`. | Denied. |
+| changing announcements | stops a signed-out user editing or deleting a post | Shared seed. | A signed-out user changes the title of `ownerPost`, then deletes it. | Both denied. |
+| changing org settings | lets the owner change settings | Shared seed. | `owner` renames `org1`. | Allowed. |
+| changing org settings | stops a non-editor changing settings | Shared seed. | `stranger` renames `org1`. | Denied. |
+| changing org settings | stops a non-editor making themselves owner | Shared seed. | `stranger` sets `org1`'s owner to `stranger`. | Denied. |
+| changing org settings | stops a non-editor deleting the org | Shared seed. | `stranger` deletes `org1`. | Denied. |
+| changing org settings | stops an added editor changing settings | Shared seed. | `editor` renames `org1`. | Denied. |
+| changing org settings | stops a signed-out user changing settings | Shared seed. | A signed-out user renames `org1`. | Denied. |
+| granting edit access | lets the owner add an editor | Shared seed. | `owner` adds `stranger` as a member of `org1`. | Allowed. |
+| granting edit access | stops a non-editor granting themselves access | Shared seed. | `stranger` adds `stranger` as a member of `org1`. | Denied. |
+| granting edit access | stops a non-editor granting someone else access | Shared seed. | `stranger` adds `friend` as a member of `org1`. | Denied. |
+| granting edit access | stops a non-editor removing an editor | Shared seed. | `stranger` deletes `editor`'s member record. | Denied. |
+| granting edit access | stops an added editor granting access to others | Shared seed. | `editor` adds `stranger` as a member of `org1`. | Denied. |
+| granting edit access | stops a signed-out user granting access | Shared seed. | A signed-out user adds `stranger` as a member of `org1`. | Denied. |

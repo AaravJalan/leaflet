@@ -9,6 +9,7 @@
     "lint": "oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-leaflet \"vitest run --config vitest.rules.config.ts\"",
     "preview": "vite preview",
     "firebase:login": "firebase login",
     "firebase:init-hint": "echo 'Set .firebaserc project id, copy .env.example to .env, enable Auth+Firestore, then npm run deploy'",
@@ -22,6 +23,7 @@
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^24.19.2",

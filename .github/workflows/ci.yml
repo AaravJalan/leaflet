@@ -1,7 +1,7 @@
 name: CI
 
-# Every push runs tests, lint, and build. A push to main that passes all of
-# them also deploys to Firebase Hosting.
+# Every push runs unit tests, Firestore rules tests, lint, and build. A push
+# to main that passes all of them also deploys to Firebase Hosting.
 on:
   push:
   pull_request:
@@ -28,6 +28,23 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+
+  rules:
+    name: Firestore rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      # The Firestore emulator runs on Java.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run test:rules
 
   build:
     name: Lint and build
@@ -58,7 +75,7 @@ jobs:
 
   deploy:
     name: Deploy to Firebase Hosting
-    needs: [test, build]
+    needs: [test, rules, build]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # Never run two deploys at once; a newer push waits for the current one.

@@ -93,6 +93,8 @@ A few shared sample orgs and posts always show for everyone. They are owned by d
 
 A signed-in user can create an org when `ownerId` is their uid. There is no verified flag.
 
+`npm run test:rules` tests `firestore.rules` against the Firestore emulator. It needs Java 21 or later (for example `brew install openjdk@21`). `npm test` runs only the unit tests.
+
 ## Not built
 
 - Email when something is posted. "Inbox" in the homepage line is the Subscribed filter, not mail.
