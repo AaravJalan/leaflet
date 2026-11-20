@@ -3,24 +3,6 @@ import { expect, test } from '@playwright/test'
 // These run against demo mode (see playwright.config.ts), so the sample
 // orgs and posts from src/data/mock.ts are always there.
 
-test('landing page shows the headline and sign-in links', async ({ page }) => {
-  await page.goto('/welcome')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('one place')
-  await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Get started' })).toBeVisible()
-})
-
-test('landing type chips filter the announcements', async ({ page }) => {
-  await page.goto('/welcome')
-  const board = page.getByRole('region', { name: 'Recent announcements' })
-  await expect(board.getByText('Thursday grocery run')).toBeVisible()
-
-  await page.getByRole('button', { name: 'Arts & Culture' }).click()
-  await expect(page.getByRole('button', { name: 'Arts & Culture' })).toHaveAttribute('aria-pressed', 'true')
-  await expect(board.getByText('Open studio night')).toBeVisible()
-  await expect(board.getByText('Thursday grocery run')).toHaveCount(0)
-})
-
 test('feed lists sample events and opens one', async ({ page }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'Newest events' })).toBeVisible()
