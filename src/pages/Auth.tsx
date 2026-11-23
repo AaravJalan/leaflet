@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
+import { LIMITS } from '../lib/limits'
 
 export function Auth() {
   const { user, signIn, signUp, signInWithGoogle, configured } = useAuth()
@@ -93,6 +94,7 @@ export function Auth() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Jordan"
+                maxLength={LIMITS.displayName}
                 required
               />
             </label>

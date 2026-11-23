@@ -5,6 +5,7 @@ import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
 import { rememberPermission } from '../lib/permissionLog'
 import { canOrganize } from '../lib/roles'
+import { LIMITS } from '../lib/limits'
 import { recordPermissionEvent } from '../services/activity'
 import { upsertOrgMember } from '../services/members'
 import { createOrganization } from '../services/organizations'
@@ -105,6 +106,7 @@ export function CreateOrg() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Evanston Neighborhood Cleanup"
+              maxLength={LIMITS.orgName}
               required
             />
           </label>
@@ -124,6 +126,7 @@ export function CreateOrg() {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Where this group usually meets"
+              maxLength={LIMITS.orgLocation}
             />
           </label>
           <label>
@@ -133,6 +136,7 @@ export function CreateOrg() {
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="https://example.org"
+              maxLength={LIMITS.link}
             />
           </label>
           <label>
@@ -142,6 +146,7 @@ export function CreateOrg() {
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
               placeholder="What this org posts about"
+              maxLength={LIMITS.orgDescription}
               required
             />
           </label>

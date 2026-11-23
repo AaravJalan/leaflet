@@ -18,6 +18,7 @@ import {
   type ReactNode,
 } from 'react'
 import { auth, isFirebaseConfigured } from '../lib/firebase'
+import { clip, LIMITS } from '../lib/limits'
 import { getUserProfile, setAccountType as saveAccountType, upsertUserProfile } from '../services/users'
 import type { AccountType, UserProfile } from '../types'
 
@@ -52,7 +53,10 @@ async function syncProfile(user: User) {
   await upsertUserProfile({
     uid: user.uid,
     email: (user.email || existing?.email || '').toLowerCase(),
-    displayName: user.displayName || existing?.displayName || user.email?.split('@')[0] || 'User',
+    displayName: clip(
+      user.displayName || existing?.displayName || user.email?.split('@')[0] || 'User',
+      LIMITS.displayName,
+    ),
     createdAt: existing?.createdAt ?? Date.now(),
   })
   return getUserProfile(user.uid)
@@ -93,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           : {
               uid: user.uid,
               email: (user.email || '').toLowerCase(),
-              displayName: user.displayName || user.email?.split('@')[0] || 'User',
+              displayName: clip(user.displayName || user.email?.split('@')[0] || 'User', LIMITS.displayName),
               createdAt: Date.now(),
               accountType: type,
             },

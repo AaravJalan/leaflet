@@ -36,9 +36,41 @@ service cloud.firestore {
         || exists(/databases/$(database)/documents/organizations/$(orgId)/members/$(request.auth.uid));
     }
 
+    // Text limits. Keep in sync with src/lib/limits.ts.
+    // A required field must be a non-empty string up to max characters.
+    function requiredText(data, key, max) {
+      return key in data && data[key] is string
+        && data[key].size() > 0 && data[key].size() <= max;
+    }
+
+    // An optional field may be missing, or a string up to max characters.
+    function optionalText(data, key, max) {
+      return !(key in data) || (data[key] is string && data[key].size() <= max);
+    }
+
+    function validUser(data) {
+      return optionalText(data, 'displayName', 50);
+    }
+
+    function validOrg(data) {
+      return requiredText(data, 'name', 80)
+        && requiredText(data, 'description', 1000)
+        && optionalText(data, 'location', 120)
+        && optionalText(data, 'link', 500);
+    }
+
+    function validAnnouncement(data) {
+      return requiredText(data, 'title', 100)
+        && requiredText(data, 'description', 2000)
+        && optionalText(data, 'location', 150)
+        && optionalText(data, 'link', 500)
+        && optionalText(data, 'imageUrl', 500);
+    }
+
     match /users/{userId} {
       allow read: if true;
-      allow create, update: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn() && request.auth.uid == userId
+        && validUser(request.resource.data);
 
       match /activity/{eventId} {
         allow read: if signedIn() && request.auth.uid == userId;
@@ -53,9 +85,10 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid
-        && request.resource.data.name is string
+        && validOrg(request.resource.data)
         && request.resource.data.createdAt is number;
-      allow update, delete: if isOrgOwner(orgId);
+      allow update: if isOrgOwner(orgId) && validOrg(request.resource.data);
+      allow delete: if isOrgOwner(orgId);
 
       match /members/{memberId} {
         allow read: if true;
@@ -69,13 +102,15 @@ service cloud.firestore {
     match /announcements/{announcementId} {
       allow read: if true;
       allow create: if request.resource.data.createdBy == request.auth.uid
-        && isPoster(request.resource.data.orgId);
+        && isPoster(request.resource.data.orgId)
+        && validAnnouncement(request.resource.data);
       // The author, the org owner, and anyone added under "Who can post" can edit,
       // but an edit cannot move the post to another org or change its author.
       allow update: if signedIn()
         && (resource.data.createdBy == request.auth.uid || isPoster(resource.data.orgId))
         && request.resource.data.orgId == resource.data.orgId
-        && request.resource.data.createdBy == resource.data.createdBy;
+        && request.resource.data.createdBy == resource.data.createdBy
+        && validAnnouncement(request.resource.data);
       allow delete: if signedIn()
         && (
           resource.data.createdBy == request.auth.uid

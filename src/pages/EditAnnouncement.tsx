@@ -9,6 +9,7 @@ import { buildWhen, toDateInput, toDateTimeInput, toTimeInput } from '../lib/sch
 import { loadAnnouncement } from '../services/catalog'
 import { updateAnnouncement } from '../services/announcements'
 import { CoverPicker } from '../components/CoverPicker'
+import { LIMITS } from '../lib/limits'
 import type { Announcement } from '../types'
 
 export function EditAnnouncement() {
@@ -108,7 +109,12 @@ export function EditAnnouncement() {
           <form className="form" onSubmit={onSubmit}>
             <label>
               Title
-              <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={LIMITS.announcementTitle}
+                required
+              />
             </label>
             <label>
               Details
@@ -116,6 +122,7 @@ export function EditAnnouncement() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
+                maxLength={LIMITS.announcementDescription}
                 required
               />
             </label>
@@ -137,11 +144,15 @@ export function EditAnnouncement() {
             />
             <label>
               Where
-              <input value={location} onChange={(e) => setLocation(e.target.value)} />
+              <input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                maxLength={LIMITS.announcementLocation}
+              />
             </label>
             <label>
               Link
-              <input type="url" value={link} onChange={(e) => setLink(e.target.value)} />
+              <input type="url" value={link} onChange={(e) => setLink(e.target.value)} maxLength={LIMITS.link} />
             </label>
             <CoverPicker value={imageUrl} onChange={setImageUrl} />
             {error ? <p className="error">{error}</p> : null}

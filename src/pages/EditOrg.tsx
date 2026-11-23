@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
+import { LIMITS } from '../lib/limits'
 import { slugify } from '../lib/slug'
 import { loadOrganization } from '../services/catalog'
 import { updateOrganization } from '../services/organizations'
@@ -84,7 +85,12 @@ export function EditOrg() {
           <form className="form" onSubmit={onSubmit}>
             <label>
               Name
-              <input value={name} onChange={(e) => setName(e.target.value)} required />
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={LIMITS.orgName}
+                required
+              />
             </label>
             <label>
               Type
@@ -102,6 +108,7 @@ export function EditOrg() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
+                maxLength={LIMITS.orgDescription}
                 required
               />
             </label>
@@ -111,11 +118,12 @@ export function EditOrg() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Neighborhood, campus, or meeting area"
+                maxLength={LIMITS.orgLocation}
               />
             </label>
             <label>
               Link
-              <input type="url" value={link} onChange={(e) => setLink(e.target.value)} />
+              <input type="url" value={link} onChange={(e) => setLink(e.target.value)} maxLength={LIMITS.link} />
             </label>
             {error ? <p className="error">{error}</p> : null}
             <div className="hero__actions">

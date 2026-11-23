@@ -7,6 +7,7 @@ import { useDemo } from '../context/DemoContext'
 import { mockPosterIds } from '../data/mock'
 import { CoverPicker } from '../components/CoverPicker'
 import { COVER_OPTIONS } from '../lib/images'
+import { LIMITS } from '../lib/limits'
 import { buildWhen } from '../lib/schedule'
 import { createAnnouncement } from '../services/announcements'
 import { loadOrganization } from '../services/catalog'
@@ -155,6 +156,7 @@ export function CreateAnnouncement() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Neighborhood Cleanup"
+                maxLength={LIMITS.announcementTitle}
                 required
               />
             </label>
@@ -165,6 +167,7 @@ export function CreateAnnouncement() {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
                 placeholder="Bring gloves. Meet at the park entrance."
+                maxLength={LIMITS.announcementDescription}
                 required
               />
             </label>
@@ -190,6 +193,7 @@ export function CreateAnnouncement() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Church St & Benson Ave, Evanston"
+                maxLength={LIMITS.announcementLocation}
               />
             </label>
             <label>
@@ -199,6 +203,7 @@ export function CreateAnnouncement() {
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
                 placeholder="https://..."
+                maxLength={LIMITS.link}
               />
             </label>
             <CoverPicker value={imageUrl} onChange={setImageUrl} />
