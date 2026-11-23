@@ -4,6 +4,7 @@ import { ScheduleFields } from '../components/ScheduleFields'
 import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
+import { usePostEditAccess } from '../lib/postAccess'
 import { buildWhen, toDateInput, toDateTimeInput, toTimeInput } from '../lib/schedule'
 import { loadAnnouncement } from '../services/catalog'
 import { updateAnnouncement } from '../services/announcements'
@@ -58,11 +59,13 @@ export function EditAnnouncement() {
     }
   }, [announcementId, user, demo.localPosts])
 
+  const { canEdit, checking } = usePostEditAccess(item)
+
   if (!user) return <Navigate to="/auth" replace />
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!item || !user || item.createdBy !== user.uid) return
+    if (!item || !user || !canEdit) return
     setBusy(true)
     setError('')
     const edit = {
@@ -90,15 +93,15 @@ export function EditAnnouncement() {
     }
   }
 
-  const blocked = item && user && item.createdBy !== user.uid
+  const blocked = Boolean(item && user && !checking && !canEdit)
 
   return (
     <div className="page page--narrow">
       <SetupBanner />
       {loading ? <p className="muted">Loading…</p> : null}
       {!loading && !item ? <p className="empty">Announcement not found.</p> : null}
-      {blocked ? <p className="error">Only the person who posted this can edit it.</p> : null}
-      {item && !blocked ? (
+      {blocked ? <p className="error">Only the org's owner and the people it lets post can edit this.</p> : null}
+      {item && canEdit ? (
         <section className="panel">
           <p className="eyebrow">{item.orgName}</p>
           <h1>Edit announcement</h1>

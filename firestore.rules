@@ -70,7 +70,13 @@ service cloud.firestore {
       allow read: if true;
       allow create: if request.resource.data.createdBy == request.auth.uid
         && isPoster(request.resource.data.orgId);
-      allow update, delete: if signedIn()
+      // The author, the org owner, and anyone added under "Who can post" can edit,
+      // but an edit cannot move the post to another org or change its author.
+      allow update: if signedIn()
+        && (resource.data.createdBy == request.auth.uid || isPoster(resource.data.orgId))
+        && request.resource.data.orgId == resource.data.orgId
+        && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if signedIn()
         && (
           resource.data.createdBy == request.auth.uid
           || isOrgOwner(resource.data.orgId)
