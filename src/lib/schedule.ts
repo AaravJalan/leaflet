@@ -63,20 +63,30 @@ export function buildWhen(
       throw new Error('Pick a week, at least one day, and a start time.')
     }
     const first = WEEKDAYS.map((day) => day.id).find((id) => days.includes(id)) ?? days[0]
+    const startsAtMs = dateInWeek(weekOf, first, startTime).getTime()
+    const endsAtMs = endTime ? dateInWeek(weekOf, first, endTime).getTime() : null
+    if (endsAtMs !== null && endsAtMs <= startsAtMs) {
+      throw new Error('End time must be after the start time.')
+    }
     return {
       schedule,
       repeatDays: days,
       weekOf: mondayOf(weekOf).getTime(),
-      startsAt: dateInWeek(weekOf, first, startTime).getTime(),
-      endsAt: endTime ? dateInWeek(weekOf, first, endTime).getTime() : null,
+      startsAt: startsAtMs,
+      endsAt: endsAtMs,
     }
+  }
+  const startsAtMs = startsAt ? new Date(startsAt).getTime() : null
+  const endsAtMs = endsAt ? new Date(endsAt).getTime() : null
+  if (startsAtMs !== null && endsAtMs !== null && endsAtMs <= startsAtMs) {
+    throw new Error('End date/time must be after the start date/time.')
   }
   return {
     schedule,
     repeatDays: [] as number[],
     weekOf: null,
-    startsAt: startsAt ? new Date(startsAt).getTime() : null,
-    endsAt: endsAt ? new Date(endsAt).getTime() : null,
+    startsAt: startsAtMs,
+    endsAt: endsAtMs,
   }
 }
 
