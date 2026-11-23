@@ -4,6 +4,7 @@ import { SetupBanner } from '../components/SetupBanner'
 import { useAuth } from '../context/AuthContext'
 import { useDemo } from '../context/DemoContext'
 import { useOrgAccess } from '../lib/orgAccess'
+import { usePostEditAccess } from '../lib/postAccess'
 import { formatWhen } from '../lib/schedule'
 import { OrgMarks } from '../components/OrgMarks'
 import { loadAnnouncement } from '../services/catalog'
@@ -132,7 +133,9 @@ export function AnnouncementDetail() {
   }
 
   const access = useOrgAccess(item?.orgId ?? '', item?.orgOwnerId)
-  const canEdit = Boolean(user && item && item.createdBy === user.uid)
+  const isAuthor = Boolean(user && item && item.createdBy === user.uid)
+  // The author, the org owner, and anyone added under "Who can post" can edit.
+  const { canEdit } = usePostEditAccess(item)
 
   return (
     <div className="page page--narrow">
@@ -200,7 +203,7 @@ export function AnnouncementDetail() {
                 Edit
               </Link>
             ) : null}
-            {canEdit ? (
+            {isAuthor ? (
               <button type="button" className="btn btn--ghost" onClick={() => void onDelete()}>
                 Delete
               </button>
