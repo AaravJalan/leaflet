@@ -23,11 +23,13 @@ const OPTIONS: { id: AccountType; title: string; body: string }[] = [
 ]
 
 export function Settings() {
-  const { user, profile, chooseAccountType } = useAuth()
+  const { user, profile, loading, chooseAccountType } = useAuth()
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
 
+  // Wait for a saved login to load; otherwise a page refresh here bounces to /auth.
+  if (loading) return <p className="muted">Loading…</p>
   if (!user) return <Navigate to="/auth" replace />
 
   async function pick(type: AccountType) {
